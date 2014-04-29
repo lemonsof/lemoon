@@ -14,7 +14,7 @@ namespace lemon {namespace luabind{
     class Register
     {
     public:
-        virtual void Handle(lua_State* L) = 0;
+        virtual void Handle(lua_State* L) const = 0;
     };
 }}
 

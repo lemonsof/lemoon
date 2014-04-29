@@ -21,20 +21,29 @@ namespace lemon { namespace luabind{
     public:
         typedef R                      (*Ptr)(Args...);
     public:
-        
+  
         Function(const char* name,Ptr ptr)
         :_name(name),_ptr(ptr)
         {
             
         }
         
-        void Handle(lua_State *L)
+        void Handle(lua_State *L) const
         {
-            __unwind_function<R(Args...),R()>(_ptr);
+            luaL_Reg reg[] = 
+            {
+                { _name.c_str(), &__function},
+                {nullptr,nullptr}
+            };
+            auto unwind = new function_call<R(Args...)>(_ptr);
+
+            lua_pushlightuserdata(L, unwind);
+
+            luaL_setfuncs(L, reg, 1);
         }
         
     private:
-        const std::string              _name;
+        std::string                    _name;
         Ptr                            _ptr;
     };
     

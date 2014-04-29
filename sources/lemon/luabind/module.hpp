@@ -8,6 +8,7 @@
 
 #ifndef lemon_lua_module_hpp
 #define lemon_lua_module_hpp
+#include <queue>
 #include <string>
 #include <lua/lua.hpp>
 #include <lemon/luabind/register.hpp>
@@ -16,12 +17,13 @@ namespace lemon { namespace luabind{
     class Module
     {
     public:
+        Module(Module && rhs);
         Module(lua_State *L,const char* name);
         ~Module();
-        Module& operator[](Register && reg);
+        Module& operator[](const Register & reg);
     private:
         lua_State                           *_L;
-        const std::string                   _name;
+        std::string                         _name;
     };
     
     
