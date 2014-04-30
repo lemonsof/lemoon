@@ -94,6 +94,20 @@ namespace lemon{ namespace luabind{
         }
     };
 
+    template<>
+    struct lua_cast<bool>
+    {
+        bool from(lua_State *L, int index)
+        {
+            return lua_toboolean(L, index)?true:false;
+        }
+
+        void to(lua_State *L, bool source)
+        {
+            lua_pushboolean(L, source?1:0);
+        }
+    };
+
     template<typename Type>
     struct constructor_
     {

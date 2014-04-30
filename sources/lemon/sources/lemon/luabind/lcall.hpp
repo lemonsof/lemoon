@@ -17,6 +17,7 @@
 #include <type_traits>
 #include <lua/lua.hpp>
 #include <lemon/luabind/lcast.hpp>
+#include <lemon/luabind/lstack.hpp>
 
 namespace lemon{ namespace luabind{
 
@@ -34,12 +35,12 @@ namespace lemon{ namespace luabind{
 
     //////////////////////////////////////////////////////////////////////////
 
-    template<typename R,typename ...Args> struct __function_callsite;
+    template<int N,typename R,typename ...Args> struct __function_callsite;
 
-    template<typename R, typename Arg0, typename ...Args>
-    struct __function_callsite<R,Arg0, Args...> : __function_callsite<R,Args...>
+    template<int N,typename R, typename Arg0, typename ...Args>
+    struct __function_callsite<N,R,Arg0, Args...> : __function_callsite<N + 1,R,Args...>
     {
-        typedef __function_callsite<R,Args...> Super;
+        typedef __function_callsite<N + 1,R,Args...> Super;
 
         typedef typename std::remove_reference<Arg0>::type Param0;
 
@@ -48,18 +49,18 @@ namespace lemon{ namespace luabind{
         template<typename F,typename ...Params>
         int call0(lua_State *L, F f, Params ...params)
         {
-            return Super::call0(L, f, params..., __cast.from(L, -(int)sizeof ...(Args) -1));
+            return Super::call0(L, f, params..., __cast.from(L, N));
         }
 
         template<typename Type,typename F, typename ...Params>
         int call(lua_State *L, Type target,F f, Params ...params)
         {
-            return Super::call(L, target, f, params..., __cast.from(L, -(int)sizeof ...(Args) -1));
+            return Super::call(L, target, f, params..., __cast.from(L, N));
         }
     };
 
-    template<typename R>
-    struct __function_callsite<R>
+    template<int N,typename R>
+    struct __function_callsite<N,R>
     {
         typedef typename std::remove_reference<R>::type Param0;
 
@@ -82,8 +83,8 @@ namespace lemon{ namespace luabind{
         }
     };
 
-    template<>
-    struct __function_callsite<void>
+    template<int N>
+    struct __function_callsite<N,void>
     {
         template<typename F, typename ...Params>
         int call0(lua_State *, F f, Params ...params)
@@ -111,7 +112,7 @@ namespace lemon{ namespace luabind{
 
         F f;
 
-        __function_callsite<R, Args...>  __callsite;
+        __function_callsite<1,R, Args...>  __callsite;
 
         function_callsite(F f)
         {
@@ -133,7 +134,7 @@ namespace lemon{ namespace luabind{
 
         F f;
         
-        __function_callsite<R, Args...>  __callsite;
+        __function_callsite<2,R, Args...>  __callsite;
 
         class_function_callsite(F f)
         {
@@ -161,5 +162,89 @@ namespace lemon{ namespace luabind{
     {
         return new class_function_callsite<R(Type::*)(Args...)>(f);
     }
+
+    //////////////////////////////////////////////////////////////////////////
+
+    template<typename R> struct __return
+    {
+        typedef typename std::remove_reference<R>::type Param0;
+
+        const static int N = 1;
+
+        static R get(lua_State *L)
+        {
+            return lua_cast<Param0>().from(L,-1);
+        }
+    };
+
+    template<> struct __return<void>
+    {
+       
+        const static int N = 0;
+
+        static void get(lua_State *)
+        {
+            
+        }
+    };
+
+
+
+    template<typename R, int N>
+    inline R __call(lua_State* L)
+    {
+        if (0 != lua_pcall(L, NULL, __return<R>::N, 0))
+        {
+            throw std::runtime_error(lua_tostring(L,-1));
+        }
+
+        return __return<R>::get(L);
+    }
+
+    template<typename R,int N,typename Arg0,typename ...Args>
+    inline R __call(lua_State* L,Arg0 &&arg0, Args&& ...args)
+    {
+        return __call<R,N>(L,args...);
+    }
+
+    inline void __index(lua_State*L, const char*begin, const char*end)
+    {
+        const char * iter = begin;
+
+        while (*iter != '.' && iter < end)
+        {
+            ++iter;
+        }
+
+        if (begin != iter)
+        {
+            std::string node(begin, iter);
+            lua_getfield(L,-1,node.c_str());
+            if (lua_type(L, -1) == LUA_TNIL)
+            {
+                throw std::runtime_error("can't index variable :" + node);
+            }
+        }
+
+        ++iter;
+
+        if (iter < end)
+        {
+            __index(L, iter, end);
+        }
+    }
+
+    template<typename R,typename ...Args>
+    inline R call(lua_State* L,const char* name,Args... args)
+    {
+        stack_protector stack(L);
+        lua_getglobal(L, "_G");
+        __index(L, name, name + strlen(name));
+        
+        luaL_checktype(L, -1, LUA_TFUNCTION);
+        return __call<R,sizeof ...(Args)>(L, args...);
+    }
+
+    
 } }
 #endif // LEMON_LUABIND_LCALL_HPP

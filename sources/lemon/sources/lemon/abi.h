@@ -19,6 +19,13 @@
 
 #define LEMON_MILLISECONDS_OF_ONE_TICK                          100
 
-LEMON_API void start_lemon_service(const char* script);
+typedef struct{
+    const char*                                                 startfile;
+    const char**                                                loadpaths;
+    const char**                                                loadcpaths;
+    const char**                                                args;
+}                                                               lemon_conf;
+
+LEMON_API int start_lemon_service(const lemon_conf * conf);
 
 #endif // LEMON_ABI_H

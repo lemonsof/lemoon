@@ -1,6 +1,7 @@
+#include <lemon/abi.h>
 #include <lemon/configure.h>
 #include <lemon/unittest.hpp>
-#include <lemon/luabind/luabind.hpp>
+
 
 
 namespace lemon{namespace luabind{
@@ -9,16 +10,26 @@ namespace lemon{namespace luabind{
 
     LEMON_UNITTEST_CASE(dispatch_test, load_script)
     {
-        state L;
-
-        L.search_path(LEMON_SOURCE_ROOT "/share/runtime/?.lua");
-
-        L.search_path(LEMON_SOURCE_ROOT "/share/unittest/?.lua");
-
-        if (0 != luaL_dofile(L, LEMON_SOURCE_ROOT "/share/unittest/dispatch.lua"))
+        const char* paths[] = 
         {
-            throw std::runtime_error(lua_tostring(L, -1));
-        }
+            LEMON_SOURCE_ROOT "/share/unittest/?.lua",
+            LEMON_SOURCE_ROOT "/share/runtime/?.lua",
+            nullptr
+        };
+
+        const char* cpaths[] = { nullptr };
+
+        const char* args[] = { nullptr };
+
+        lemon_conf conf =
+        {
+            LEMON_SOURCE_ROOT "/share/runtime/lemon/dispatch.lua",
+            paths,
+            cpaths,
+            args
+        };
+
+        lemon_check(0 == start_lemon_service(&conf));
     }
     
 }}

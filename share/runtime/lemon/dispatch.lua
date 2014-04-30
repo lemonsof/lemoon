@@ -1,7 +1,17 @@
-local module ={}
+local activeQ = {}
+local blockQ = {}
 
-function module.dispatch( )
-	
+blockQ.t = 1
+
+blockQ[1] =2
+
+
+
+function lemon.dispatch( ... )
+	print(#blockQ)	
+	return false
 end
 
-return module
+function lemon.fire_event( sender, event )
+	-- body
+end

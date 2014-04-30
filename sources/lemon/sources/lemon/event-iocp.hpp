@@ -25,13 +25,22 @@ namespace lemon{
     public:
         event_driver_iocp(lnode* node);
         ~event_driver_iocp();
-        void run();
+        int run();
+        void exit(int code)
+        {
+            _exit = true;
+            _exitcode = code;
+        }
     private:
+        void io_complete(int bytesOfTrans,OVERLAPPED * overlapped,DWORD errorCode);
+    private:
+        bool                                _exit;
+        int                                 _exitcode;
         lnode                               *_node;
         HANDLE                              _handle;
     };
 
-    typedef event_driver_iocp event_driver;
+    using event_driver = event_driver_iocp;
 }
 
 #endif //WIN32
