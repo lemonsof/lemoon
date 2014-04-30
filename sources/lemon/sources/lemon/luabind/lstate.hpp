@@ -36,14 +36,14 @@ namespace lemon{namespace luabind {
             return _L;
         }
 
-        void SearchPath(const char* path)
+        void search_path(const char* path)
         {
             std::stringstream stream;
             stream << "package.path = package.path .." << "';" << path << "'";
             luaL_dostring(_L, stream.str().c_str());
         }
 
-        void SearchCPath(const char* path)
+        void search_cpath(const char* path)
         {
             std::stringstream stream;
             stream << "package.cpath = package.cpath .." << "';" << path << "'";

@@ -2,9 +2,7 @@
 
 #ifdef WIN32
 #	define WIN32_WINNT			${WIN32_WINNT} 			
-#	define _WIN32_WINDOWS		${_WIN32_WINDOWS} 			
-#	define NTDDI_VERSION		${NTDDI_VERSION} 			
-#	define _WIN32_IE			${_WIN32_IE} 			
+#	define _WIN32_WINDOWS		${_WIN32_WINDOWS} 					
 #endif //WIN32
 
 #ifdef WIN32

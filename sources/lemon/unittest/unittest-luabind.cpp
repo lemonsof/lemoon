@@ -51,7 +51,7 @@ namespace lemon{ namespace luabind{
 
             ;
 
-        L.SearchPath(LEMON_SOURCE_ROOT "share/unittest/?.lua");
+        L.search_path(LEMON_SOURCE_ROOT "share/unittest/?.lua");
 
         if (0 != luaL_dofile(L, LEMON_SOURCE_ROOT "/share/unittest/function.lua"))
         {

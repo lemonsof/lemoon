@@ -17,6 +17,8 @@
 
 #include <lemon/configure.h>
 
+#define LEMON_MILLISECONDS_OF_ONE_TICK                          100
+
 LEMON_API void start_lemon_service(const char* script);
 
 #endif // LEMON_ABI_H
