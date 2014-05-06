@@ -1,17 +1,8 @@
-local activeQ = {}
-local blockQ = {}
 
-blockQ.t = 1
-
-blockQ[1] =2
-
-
-
-function lemon.dispatch( ... )
-	print(#blockQ)	
-	return false
+function lemoon_io_event(  )
+	-- body
 end
 
-function lemon.fire_event( sender, event )
-	-- body
+function lemoon_dispatch_one(  )
+	
 end
