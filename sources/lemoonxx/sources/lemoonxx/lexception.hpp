@@ -36,7 +36,7 @@ namespace lemoon{
     template<typename ...Args>
     inline void lthrow(const char* fmt,Args&& ...args)
     {
-        char buff[256];
+        char buff[1024];
 
         int length = sprintf_s(buff, fmt, args...);
 

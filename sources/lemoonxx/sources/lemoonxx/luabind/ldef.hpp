@@ -137,7 +137,7 @@ namespace lemoon{ namespace luabind{
                     lua_setfield(L, -2, "__gc");
                 }
 
-                lua_setmetatable(L, -2);
+                //lua_setmetatable(L, -2);
             }
         }
 
