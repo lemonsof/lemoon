@@ -106,15 +106,14 @@ LEMOON_PRIVATE int lio_accept_op(lua_State *L, lio_overlapped*overlapped,size_t 
             &remoteAddress,
             &remoteAddressSize);
       
+        lua_pushnil(L);
         lio_pushsock(L, remote,port,0, 0, 0);
         lemoonL_pushsockaddr(L, remoteAddress, remoteAddressSize);
-        lua_pushnil(L);
-
+      
     } else {
-
+        lemoonL_push_error_win32(L, errorCode, "win32[AcceptEx] exception");
         lua_pushnil(L);
         lua_pushnil(L);
-        lemoonL_push_error_win32(L, errorCode, "");
         closesocket(remote);
     }
 

@@ -27,4 +27,4 @@ end
 
 server:recvfrom(56,recvfrom)
 
-util:run(10000000000)
+util:run(1000000)
