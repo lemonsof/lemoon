@@ -1,7 +1,7 @@
-#include <lemoon/abi.h>
+#include <lemoon/lemoon.h>
 
 typedef struct lsockaddr{
-    socklen_t               length;
+    size_t                  length;
     char                    data[1];
 }                           lsockaddr;
 
@@ -11,9 +11,9 @@ static const struct luaL_Reg lsocketaddr_funcs [] =
 };
 
 static int lsockaddr_tostring(lua_State *L){
-    socklen_t len;
-    
-    struct sockaddr * addr = lemoonL_tosockaddr(L, 1, &len);
+    size_t len;
+
+    struct sockaddr * addr = lemoon_tosockaddr(L, 1, &len);
 
     char host[128] = { 0 };
 
@@ -26,7 +26,7 @@ static int lsockaddr_tostring(lua_State *L){
         struct sockaddr_in *v4 = (struct sockaddr_in*)addr;
 
         if (!inet_ntop(AF_INET, &v4->sin_addr, host, sizeof(host))){
-            return lemoonL_error_win32(L, WSAGetLastError(), "win32[inet_ntop] exception");
+            return lemoonL_sysmerror(L, WSAGetLastError(), "call inet_ntop exception");
         }
 
         service = ntohs(v4->sin_port);
@@ -37,7 +37,7 @@ static int lsockaddr_tostring(lua_State *L){
         struct sockaddr_in6 *v6 = (struct sockaddr_in6*)addr;
 
         if (!inet_ntop(AF_INET6, &v6->sin6_addr, host, sizeof(host))){
-            return lemoonL_error_win32(L, WSAGetLastError(), "win32[inet_ntop] exception");
+            return lemoonL_sysmerror(L, WSAGetLastError(), "call inet_ntop exception");
         }
 
         service = ntohs(v6->sin6_port);
@@ -50,14 +50,14 @@ static int lsockaddr_tostring(lua_State *L){
         return 1;
     }
 
-    lua_pushfstring(L, "[%s,%d]",host,service);
+    lua_pushfstring(L, "[%s,%d]", host, service);
 
     return 1;
 }
 
-LEMOON_API void lemoonL_pushsockaddr(lua_State *L, struct sockaddr* addr, socklen_t len){
+LEMOON_API void lemoonL_pushsockaddr(lua_State *L, struct sockaddr* addr, size_t len){
 
-    lsockaddr *target = lua_newuserdata(L, sizeof(lsockaddr) + len);
+    lsockaddr *target = lua_newuserdata(L, sizeof(lsockaddr) +len);
 
     target->length = len;
 
@@ -71,31 +71,25 @@ LEMOON_API void lemoonL_pushsockaddr(lua_State *L, struct sockaddr* addr, sockle
     lua_setmetatable(L, -2);
 }
 
-LEMOON_API struct sockaddr* lemoonL_tosockaddr(lua_State *L, int index, socklen_t *len){
+LEMOON_API struct sockaddr* lemoon_tosockaddr(lua_State *L, int index, size_t *len){
     lsockaddr* addr = luaL_checkudata(L, index, LEMOON_REG(LEMOON_SOCKADDR));
     if (len){
         *len = addr->length;
-    } 
+    }
 
     return (struct sockaddr*)addr->data;
 }
 
-LEMOON_API int lemoon_newsockaddr(lua_State *L){
+LEMOON_API void lemoon_getaddrinfo(lua_State *L, const char* host, const char* service, int af, int type,int flags){
     struct addrinfo hints, *target;
 
-    luaL_checkstack(L, 5,NULL);
-
-    const char * host = luaL_checkstring(L,1);
-
-    const char * service = luaL_checkstring(L, 2);
-
     memset(&hints, 0, sizeof(hints));
-    
-    hints.ai_family = luaL_optinteger(L, 3, AF_UNSPEC);
 
-    hints.ai_socktype = luaL_optinteger(L, 4, 0);
+    hints.ai_family = af;
 
-    hints.ai_flags |= luaL_optinteger(L, 5, 0);
+    hints.ai_socktype = type;
+     
+    hints.ai_flags |= flags;
 
     host = strlen(host) == 0 ? NULL : host;
 
@@ -103,10 +97,11 @@ LEMOON_API int lemoon_newsockaddr(lua_State *L){
 
     if (status){
 #ifdef WIN32
-        return luaL_error(L, "unknown addrinfo(%s,%s) :%s", host, service, gai_strerrorA(status));
+        lemoonL_error(L, "unknown addrinfo(%s,%s) :%s", host, service, gai_strerrorA(status));
 #else
-        return luaL_error(L, "unknown addrinfo(%s,%s) :%s", host, service, gai_strerror(status));
+        lemoonL_error(L, "unknown addrinfo(%s,%s) :%s", host, service, gai_strerror(status));
 #endif //LEMOON_UNICODE
+        return;
     }
 
     lua_newtable(L);
@@ -114,18 +109,16 @@ LEMOON_API int lemoon_newsockaddr(lua_State *L){
     int i = 1;
 
     for (struct addrinfo* iter = target; iter != NULL; iter = iter->ai_next){
-        lemoonL_pushsockaddr(L,iter->ai_addr,(socklen_t)iter->ai_addrlen);
-        lua_rawseti(L, -2, i ++);
+        lemoonL_pushsockaddr(L, iter->ai_addr, (socklen_t) iter->ai_addrlen);
+        lua_rawseti(L, -2, i++);
     }
 
     freeaddrinfo(target);
-
-    return 1;
 }
 
-LEMOON_API struct sockaddr* lemoonL_testsockaddr(lua_State *L, int index, socklen_t *len){
+LEMOON_API struct sockaddr* lemoonL_testsockaddr(lua_State *L, int index, size_t *len){
     lsockaddr* addr = luaL_testudata(L, index, LEMOON_REG(LEMOON_SOCKADDR));
-    
+
     if (!addr) {
         return NULL;
     }

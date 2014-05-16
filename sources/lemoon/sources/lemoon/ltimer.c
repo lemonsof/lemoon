@@ -1,17 +1,10 @@
-#include <assert.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdint.h>
-#include <lemoon/abi.h>
-#include <lemoon/ltimer.h>
-
-#define LEMOON_TIMERWHEEL_REG LEMOON_PREFIX "." LEMOON_TIMERWHEEL
+#include <lemoon/lemoon.h>
 
 typedef struct ltimer{
     struct ltimer   *next;
     struct ltimer   **prev;
     int             callback;
-    uint32_t        timeout; //ticks of timeout
+    size_t          timeout; //ticks of timeout
 }                   ltimer;
 
 typedef struct{
@@ -20,13 +13,13 @@ typedef struct{
 }               lcascade;
 
 typedef struct ltimewheel{
-  
+
     int         ms;//milliseconds of one tick
     int         timers;
     lcascade    cascades[4];
 }               ltimerwheel;
 
-static void __close_timer(lua_State *L,ltimer * timer){
+static void __close_timer(lua_State *L, ltimer * timer){
     luaL_unref(L, LUA_REGISTRYINDEX, timer->callback);
     free(timer);
 }
@@ -38,26 +31,26 @@ static void __invoke(lua_State *L, ltimerwheel *timerwheel, ltimer * timer){
     if (result != 0)
     {
         __close_timer(L, timer);
-        luaL_error(L,"invoke timer(0x%p) error\n\t%s",timer,lua_tostring(L,-1));
+        luaL_error(L, "invoke timer(0x%p) error\n\t%s", timer, lua_tostring(L, -1));
     }
 
     __close_timer(L, timer);
 }
 
 
-static void __insert_timer(lua_State *L,ltimerwheel *timerwheel, ltimer *t){
+static void __insert_timer(lua_State *L, ltimerwheel *timerwheel, ltimer *t){
 
     size_t buckets;
 
     lcascade * cas;
 
-    uint32_t tick = t->timeout;
+    size_t tick = t->timeout;
 
     assert(t->next == NULL && t->prev == NULL);
 
     if (0 == tick) {
 
-        __invoke(L,timerwheel,t);
+        __invoke(L, timerwheel, t);
 
         return;
     }
@@ -157,9 +150,13 @@ static void __cascade(lua_State*L, ltimerwheel*timerwheel, int index){
     };
 }
 
+static int ltimer_tick(lua_State *L){
+    lemoon_tick(L,1);
+    return 0;
+}
 
-static int lemoon_tick(lua_State *L){
-    ltimerwheel *timerwheel = luaL_checkudata(L, 1, LEMOON_TIMERWHEEL_REG);
+LEMOON_API void lemoon_tick(lua_State *L, int index){
+    ltimerwheel *timerwheel = luaL_checkudata(L, index, LEMOON_REG(LEMOON_TIMER));
 
     lcascade *cas = &timerwheel->cascades[0];
 
@@ -171,7 +168,7 @@ static int lemoon_tick(lua_State *L){
 
     cas->cursor %= 256;
 
-    __cascade(L,timerwheel,0);
+    __cascade(L, timerwheel, 0);
 
     while (timers) {
 
@@ -184,47 +181,52 @@ static int lemoon_tick(lua_State *L){
 
         timers = next;
     }
+}
+
+static int lemoon_newtimer(lua_State *L){
+
+    luaL_checkstack(L, 3, NULL);
+    luaL_checkudata(L, 1, LEMOON_REG(LEMOON_TIMER));
+    int timeout = luaL_checkinteger(L, 2);
+    if (timeout <= 0){
+        return luaL_argerror(L, 2, "timer's timeout must greater than zero");
+    }
+
+    lemoon_timeout(L, 1, timeout);
 
     return 0;
 }
 
-static int lemoon_newtimer(lua_State *L){
-    luaL_checkstack(L, 3, NULL);
-    ltimerwheel *timerwheel = luaL_checkudata(L, 1, LEMOON_TIMERWHEEL_REG);
-    int timeout = luaL_checkinteger(L, 2);
-    if (timeout <= 0){
-        return luaL_argerror(L,2,"timer's timeout must greater than zero");
-    }
+LEMOON_API void lemoon_timeout(lua_State *L, int index, size_t timeout){
+    ltimerwheel *timerwheel = lua_touserdata(L, index);
 
-    luaL_checktype(L, 3, LUA_TFUNCTION);
+    luaL_checktype(L, -1, LUA_TFUNCTION);
 
-    ltimer * timer = (ltimer*)malloc(sizeof(ltimer));
+    ltimer * timer = (ltimer*) malloc(sizeof(ltimer));
 
     timer->callback = luaL_ref(L, LUA_REGISTRYINDEX);
 
     timer->next = NULL;
-    
+
     timer->prev = NULL;
 
-    timer->timeout = timeout/timerwheel->ms;
+    timer->timeout = timeout / timerwheel->ms;
 
     timer->timeout = timer->timeout ? timer->timeout : 1;
 
-    __insert_timer(L,timerwheel,timer);
-
-    return 0;
+    __insert_timer(L, timerwheel, timer);
 }
 
 static int lemoon_timerwheel_close(lua_State *L)
 {
-    ltimerwheel *timerwheel = luaL_checkudata(L, 1, LEMOON_TIMERWHEEL_REG);
+    ltimerwheel *timerwheel = luaL_checkudata(L, 1, LEMOON_REG(LEMOON_TIMER));
 
     for (int i = 0; i < 4; ++i)
     {
         for (int j = 0; j < 256; ++j){
             ltimer* timer = timerwheel->cascades[i].buckets[j];
             if (timer != NULL){
-                __close_timer(L,timer);
+                __close_timer(L, timer);
             }
         }
     }
@@ -236,20 +238,20 @@ static int lemoon_timerwheel_close(lua_State *L)
 static const struct luaL_Reg ltimerwheel_funcs [] =
 {
     { "timeout", lemoon_newtimer },
-    { "tick", lemoon_tick },
+    { "tick", ltimer_tick },
     { NULL, NULL }  /* sentinel */
 };
 
-LEMOON_API int lemoon_newtimerwheel(lua_State *L)
+LEMOON_API void lemoon_newtimewheel(lua_State *L,int millisecondsOfTick)
 {
     luaL_checkstack(L, 1, NULL);
     ltimerwheel * timerwheel = lua_newuserdata(L, sizeof(ltimerwheel));
 
-    memset(timerwheel,0,sizeof(ltimerwheel));
+    memset(timerwheel, 0, sizeof(ltimerwheel));
 
-    timerwheel->ms = luaL_checkinteger(L, 1);
+    timerwheel->ms = millisecondsOfTick;
 
-    if (luaL_newmetatable(L, LEMOON_TIMERWHEEL_REG))
+    if (luaL_newmetatable(L, LEMOON_REG(LEMOON_TIMER)))
     {
         luaL_newlib(L, ltimerwheel_funcs);
 
@@ -261,6 +263,4 @@ LEMOON_API int lemoon_newtimerwheel(lua_State *L)
     }
 
     lua_setmetatable(L, -2);
-
-    return 1;
 }

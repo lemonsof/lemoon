@@ -1,4 +1,3 @@
-#include <lemoon/abi.h>
 #include <lemoon/configure.h>
 #include <lemoonxx/unittest.hpp>
 #include <lemoonxx/lexception.hpp>

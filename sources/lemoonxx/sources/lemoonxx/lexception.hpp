@@ -16,7 +16,7 @@
 #include <cstdio>
 #include <string>
 #include <stdexcept>
-#include <lemoon/abi.h>
+#include <lemoon/lemoon.h>
 #include <lemoonxx/luabind/luabind.hpp>
 
 namespace lemoon{
