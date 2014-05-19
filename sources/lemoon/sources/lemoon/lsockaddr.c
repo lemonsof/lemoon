@@ -25,7 +25,11 @@ static int lsockaddr_tostring(lua_State *L){
         struct sockaddr_in *v4 = (struct sockaddr_in*)addr;
 
         if (!inet_ntop(AF_INET, &v4->sin_addr, host, sizeof(host))){
+#ifdef WIN32
             return lemoonL_sysmerror(L, WSAGetLastError(), "call inet_ntop exception");
+#else
+            return lemoonL_sysmerror(L,errno, "call inet_ntop exception");
+#endif
         }
 
         service = ntohs(v4->sin_port);
@@ -36,7 +40,11 @@ static int lsockaddr_tostring(lua_State *L){
         struct sockaddr_in6 *v6 = (struct sockaddr_in6*)addr;
 
         if (!inet_ntop(AF_INET6, &v6->sin6_addr, host, sizeof(host))){
+#ifdef WIN32
             return lemoonL_sysmerror(L, WSAGetLastError(), "call inet_ntop exception");
+#else
+            return lemoonL_sysmerror(L, errno, "call inet_ntop exception");
+#endif
         }
 
         service = ntohs(v6->sin6_port);

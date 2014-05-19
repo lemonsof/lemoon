@@ -100,8 +100,8 @@ LEMOON_API int lemoon_sysmerror(lua_State *L, int errcode, const char * file, in
 
 
 
-#define lemoonL_error(L,msg,...) lemoon_error(L,__FILE__,__LINE__,msg,__VA_ARGS__)
-#define lemoonL_pushsysmerror(L,errcode,msg,...) lemoon_pushsysmerror(L,errcode,__FILE__,__LINE__,msg,__VA_ARGS__)
-#define lemoonL_sysmerror(L,errcode,msg)  1//lemoon_sysmerror(L,errcode,__FILE__,__LINE__,msg,__VA_ARGS__)
+#define lemoonL_error(L,msg,...) lemoon_error((L),__FILE__,__LINE__,(msg),##__VA_ARGS__)
+#define lemoonL_pushsysmerror(L,errcode,msg,...) lemoon_pushsysmerror((L),(errcode),__FILE__,__LINE__,(msg),##__VA_ARGS__)
+#define lemoonL_sysmerror(L,errcode,msg,...)  lemoon_sysmerror((L),(errcode),__FILE__,__LINE__,(msg),##__VA_ARGS__)
 
 #endif // LEMOON_H
