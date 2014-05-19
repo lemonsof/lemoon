@@ -1,5 +1,7 @@
 #include <lemoon/lemoon.h>
-
+#ifndef WIN32
+#include <sys/time.h>
+#endif
 static int ltimer_new(lua_State *L){
     luaL_checkstack(L, 1, NULL);
     lemoon_newtimewheel(L, luaL_checkinteger(L, 1));
@@ -15,12 +17,16 @@ static int lsockaddr_new(lua_State *L){
     lemoon_getaddrinfo(L,host, service, domain,type,flags);
     return 1;
 }
+<<<<<<< HEAD
 
 static int lio_new(lua_State *L){
     lemoon_newio(L);
     return 1;
 }
 
+=======
+#ifdef WIN32
+>>>>>>> 73fc06ad52a259d0da31a5501aae16603e7feefb
 static int lemoon_gettimeofday(lua_State *L){
     union{ uint64_t time64; FILETIME ftime; } datetime;
 
@@ -38,6 +44,24 @@ static int lemoon_gettimeofday(lua_State *L){
 
     return 1;
 }
+#else
+static int lemoon_gettimeofday(lua_State *L){
+    struct timeval val;
+    if(0 != gettimeofday(&val,NULL)){
+        lemoonL_sysmerror(L,errno,"call gettimeofday exception");
+    }
+
+    lua_pushinteger(L,val.tv_sec);
+    
+    lua_setfield(L, -2, "tv_sec");
+
+    lua_pushinteger(L,val.tv_usec);
+
+    lua_setfield(L, -2, "tv_usec");
+
+    return 1;
+}
+#endif //WIN32
 
 static luaL_Reg lemoon_funcs[] = {
     { "timer", ltimer_new },
@@ -102,7 +126,7 @@ static void __pushsysmerror(lua_State *L,int errcode){
 
 
 #else
-static __pushsysmerror(lua_State *L,int errcode){
+static void __pushsysmerror(lua_State *L,int errcode){
     lua_pushfstring(L, "POSIX_ERROR(%d) :%s", errcode, strerror(errcode));
 }
 #endif //WIN32

@@ -14,6 +14,7 @@
 
 #ifndef LEMON_LUABIND_LCALL_HPP
 #define LEMON_LUABIND_LCALL_HPP
+#include <string.h>
 #include <type_traits>
 #include <lua/lua.hpp>
 #include <lemoonxx/lexception.hpp>

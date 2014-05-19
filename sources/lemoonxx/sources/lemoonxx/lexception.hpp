@@ -17,7 +17,7 @@
 #include <string>
 #include <stdexcept>
 #include <lemoon/lemoon.h>
-#include <lemoonxx/luabind/luabind.hpp>
+//#include <lemoonxx/luabind/luabind.hpp>
 
 namespace lemoon{
 
@@ -37,8 +37,11 @@ namespace lemoon{
     inline void lthrow(const char* fmt,Args&& ...args)
     {
         char buff[1024];
-
+#ifdef WIN32
         int length = sprintf_s(buff, fmt, args...);
+#else
+        int length = snprintf(buff, sizeof(buff), fmt, args...);
+#endif //WIN32
 
         throw lexception(std::string(buff,length));
     }

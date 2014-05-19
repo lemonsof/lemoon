@@ -13,10 +13,25 @@
 */
 #ifndef LEMOON_H
 #define LEMOON_H
+#include <errno.h>
 #include <stdio.h>
 #include <assert.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <string.h>
+
+#ifndef WIN32
+#ifndef __USE_POSIX
+#define __USE_POSIX
+#endif //
+#include <arpa/inet.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
+
+
+#endif //WIN32
+
 #ifdef __cplusplus
 extern "C" {
 #endif //__cplusplus
@@ -85,8 +100,8 @@ LEMOON_API int lemoon_sysmerror(lua_State *L, int errcode, const char * file, in
 
 
 
-#define lemoonL_error(L,msg,...) lemoon_error(L,__FILE__,__LINE__,msg,__VA_ARGS__)
-#define lemoonL_pushsysmerror(L,errcode,msg,...) lemoon_pushsysmerror(L,errcode,__FILE__,__LINE__,msg,__VA_ARGS__)
-#define lemoonL_sysmerror(L,errcode,msg,...) lemoon_sysmerror(L,errcode,__FILE__,__LINE__,msg,__VA_ARGS__)
+#define lemoonL_error(L,msg,...) lemoon_error((L),__FILE__,__LINE__,(msg),##__VA_ARGS__)
+#define lemoonL_pushsysmerror(L,errcode,msg,...) lemoon_pushsysmerror((L),(errcode),__FILE__,__LINE__,(msg),##__VA_ARGS__)
+#define lemoonL_sysmerror(L,errcode,msg,...)  lemoon_sysmerror((L),(errcode),__FILE__,__LINE__,(msg),##__VA_ARGS__)
 
 #endif // LEMOON_H
