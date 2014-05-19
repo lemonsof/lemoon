@@ -16,6 +16,11 @@ static int lsockaddr_new(lua_State *L){
     return 1;
 }
 
+static int lio_new(lua_State *L){
+    lemoon_newio(L);
+    return 1;
+}
+
 static int lemoon_gettimeofday(lua_State *L){
     union{ uint64_t time64; FILETIME ftime; } datetime;
 
@@ -36,6 +41,7 @@ static int lemoon_gettimeofday(lua_State *L){
 
 static luaL_Reg lemoon_funcs[] = {
     { "timer", ltimer_new },
+    { "io", lio_new},
     { "nslookup", lsockaddr_new },
     { "now", lemoon_gettimeofday },
     {NULL,NULL}
