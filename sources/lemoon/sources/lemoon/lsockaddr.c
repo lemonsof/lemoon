@@ -1,5 +1,4 @@
 #include <lemoon/lemoon.h>
-
 typedef struct lsockaddr{
     size_t                  length;
     char                    data[1];
