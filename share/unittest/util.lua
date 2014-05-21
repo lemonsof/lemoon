@@ -1,22 +1,24 @@
 local lemoon = require "lemoon"
 local datetime = require "lemoon.datetime"
-local millisecondsOfTick = 100
-local gettimeofday = lemoon.gettimeofday
+local millisecondsOfTick = 10
+local now = lemoon.now
 
 local module = 
 {
-	io = lemoon.io_service(),
-	timers = lemoon.timerwheel(millisecondsOfTick)
+	io = lemoon.io(),
+	timers = lemoon.timer(millisecondsOfTick)
 }
 
 function module.run(self,times)
 
-	local timestamp = gettimeofday()	
+	local timestamp = now()	
 
 	for i = 0, times do
-		self.io:dispatch_one(millisecondsOfTick)
-		if datetime.duration(gettimeofday(),timestamp) >= millisecondsOfTick then
+		self.io:dispatch(millisecondsOfTick)
+		local newtimestamp = now()
+		if datetime.duration(newtimestamp,timestamp) >= millisecondsOfTick then
 			self.timers:tick()
+			timestamp = newtimestamp
 		end
 
 	end

@@ -17,16 +17,14 @@ static int lsockaddr_new(lua_State *L){
     lemoon_getaddrinfo(L,host, service, domain,type,flags);
     return 1;
 }
-<<<<<<< HEAD
 
 static int lio_new(lua_State *L){
     lemoon_newio(L);
     return 1;
 }
 
-=======
 #ifdef WIN32
->>>>>>> 73fc06ad52a259d0da31a5501aae16603e7feefb
+
 static int lemoon_gettimeofday(lua_State *L){
     union{ uint64_t time64; FILETIME ftime; } datetime;
 
@@ -103,8 +101,28 @@ LEMOON_API int lemoon_error(lua_State *L, const char * file, int lines, const ch
         lua_pushfstring(L, "lemoon runtime exception:\n\tfile:%s\n\tlines:%d", file, lines);
     }
     
-    return lua_error(L);
+    return luaL_error(L, "%s", lua_tostring(L, -1));
 }
+
+LEMOON_API void lemoon_pusherror(lua_State *L, const char * file, int lines, const char* msg, ...)
+{
+    luaL_where(L, 1);
+    if (msg)
+    {
+        va_list argp;
+        va_start(argp, msg);
+        lua_pushfstring(L, "lemoon runtime exception:\n\tfile:%s\n\tlines:%d\n\tmsg:", file, lines);
+        lua_pushvfstring(L, msg, argp);
+        lua_concat(L, 3);
+        va_end(argp);
+    }
+    else
+    {
+        lua_pushfstring(L, "lemoon runtime exception:\n\tfile:%s\n\tlines:%d", file, lines);
+        lua_concat(L, 2);
+    }
+}
+
 #ifdef WIN32
 
 static void __pushsysmerror(lua_State *L,int errcode){
@@ -133,6 +151,7 @@ static void __pushsysmerror(lua_State *L,int errcode){
 
 LEMOON_API int lemoon_sysmerror(lua_State *L, int errcode, const char * file, int lines, const char* msg, ...)
 {
+    luaL_where(L, 1);
     lua_pushfstring(L, "lemoon runtime exception:\n\tfile:%s\n\tlines:%d\n\tmsg:", file, lines);
 
     if (msg)
@@ -142,14 +161,14 @@ LEMOON_API int lemoon_sysmerror(lua_State *L, int errcode, const char * file, in
         lua_pushvfstring(L, msg, argp);
         lua_pushfstring(L, "\n\tsysmsg:");
         __pushsysmerror(L, errcode);
-        lua_concat(L, 4);
+        lua_concat(L, 5);
         va_end(argp);
     }
     else
     {
         lua_pushfstring(L, "\n\tsysmsg:");
         __pushsysmerror(L, errcode);
-        lua_concat(L, 2);
+        lua_concat(L, 4);
     }
 
     return lua_error(L);
@@ -157,6 +176,7 @@ LEMOON_API int lemoon_sysmerror(lua_State *L, int errcode, const char * file, in
 
 LEMOON_API void lemoon_pushsysmerror(lua_State *L, int errcode, const char * file, int lines, const char* msg, ...)
 {
+    luaL_where(L, 1);
     lua_pushfstring(L, "lemoon runtime exception:\n\tfile:%s\n\tlines:%d\n\tmsg:", file, lines);
 
     if (msg)
@@ -166,14 +186,14 @@ LEMOON_API void lemoon_pushsysmerror(lua_State *L, int errcode, const char * fil
         lua_pushvfstring(L, msg, argp);
         lua_pushfstring(L, "\n\tsysmsg:");
         __pushsysmerror(L, errcode);
-        lua_concat(L, 4);
+        lua_concat(L, 5);
         va_end(argp);
     }
     else
     {
         lua_pushfstring(L, "\n\tsysmsg:");
         __pushsysmerror(L, errcode);
-        lua_concat(L, 2);
+        lua_concat(L, 4);
     }
 
     

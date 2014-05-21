@@ -76,16 +76,15 @@ LEMOON_API struct sockaddr* lemoonL_testsockaddr(lua_State *L, int index, size_t
 LEMOON_API struct sockaddr* lemoon_tosockaddr(lua_State *L, int index,size_t *len);
 //socket APIs
 LEMOON_API void lemoon_newsock(lua_State *L, int index, int domain, int type, int protocol);
-LEMOON_API void lemoon_closesock(lua_State *L);
-LEMOON_API void lemoon_bind(lua_State *L, int index, struct sockaddr * addr, size_t addrlen);
-LEMOON_API void lemoon_listen(lua_State *L, int index);
-LEMOON_API void lemoon_accept(lua_State *L, int index);
-LEMOON_API void lemoon_connect(lua_State *L, int index, struct sockaddr * addr, size_t addrlen);
-LEMOON_API void lemoon_send(lua_State *L,int sock, int func, const char * buff, size_t len, int flags, int timeout);
-LEMOON_API void lemoon_recv(lua_State *L, int sock, int func,size_t len, int flags, int timeout);
-LEMOON_API void lemoon_recv_some(lua_State *L, int sock, int func, size_t len, int flags, int timeout);
-LEMOON_API void lemoon_sendto(lua_State *L, int sock, int func, const char * buff, size_t len, struct sockaddr * addr, size_t addrlen,int flags, int timeout);
-LEMOON_API void lemoon_recvfrom(lua_State *L, int sock, int func, size_t len, int flags, int timeout);
+LEMOON_API int lemoon_closesock(lua_State *L);
+LEMOON_API int lemoon_bind(lua_State *L, int index, struct sockaddr * addr, size_t addrlen);
+LEMOON_API void lemoon_listen(lua_State *L, int index,int cnns);
+LEMOON_API int lemoon_accept(lua_State *L, int index,int func);
+LEMOON_API int  lemoon_connect(lua_State *L, int index, struct sockaddr * addr, size_t addrlen);
+LEMOON_API int lemoon_send(lua_State *L,int sock, int func, const char * buff, size_t len, int flags);
+LEMOON_API int lemoon_recv(lua_State *L, int sock, int func,size_t len, int flags);
+LEMOON_API int lemoon_sendto(lua_State *L, int sock, int func, const char * buff, size_t len, struct sockaddr * addr, size_t addrlen,int flags);
+LEMOON_API int lemoon_recvfrom(lua_State *L, int sock, int func, size_t len, int flags);
 //file APIs
 LEMOON_API void lemoon_newfile(lua_State *L, const char * path, const char* mode);
 LEMOON_API void lemoon_closefile();
@@ -95,12 +94,14 @@ LEMOON_API void lemoon_read_some(lua_State *L, int sock, int func, size_t len, i
 
 //Debug APIs
 LEMOON_API int lemoon_error(lua_State *L,const char * file, int lines, const char* msg, ...);
+LEMOON_API void lemoon_pusherror(lua_State *L, const char * file, int lines, const char* msg, ...);
 LEMOON_API void lemoon_pushsysmerror(lua_State *L,int errcode, const char * file, int lines, const char* msg,...);
 LEMOON_API int lemoon_sysmerror(lua_State *L, int errcode, const char * file, int lines, const char* msg, ...);
 
 
 
 #define lemoonL_error(L,msg,...) lemoon_error((L),__FILE__,__LINE__,(msg),##__VA_ARGS__)
+#define lemoonL_pusherror(L,msg,...) lemoon_pusherror((L),__FILE__,__LINE__,(msg),##__VA_ARGS__)
 #define lemoonL_pushsysmerror(L,errcode,msg,...) lemoon_pushsysmerror((L),(errcode),__FILE__,__LINE__,(msg),##__VA_ARGS__)
 #define lemoonL_sysmerror(L,errcode,msg,...)  lemoon_sysmerror((L),(errcode),__FILE__,__LINE__,(msg),##__VA_ARGS__)
 

@@ -10,10 +10,12 @@ local client = io:sock(2,2)
 
 server:bind("localhost","13512")
 
-make_timeout(timers,1000,function( ... )
+make_timeout(timers,10,function( ... )
 	print("send udp data")
 	client:sendto("hello lemoon udp socket","127.0.0.1","13512")
 end)
+
+
 
 function recvfrom( err, msg, remote )
 	if err ~= nil then
@@ -27,4 +29,4 @@ end
 
 server:recvfrom(56,recvfrom)
 
-util:run(1000000)
+util:run(1000)

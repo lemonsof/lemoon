@@ -62,7 +62,7 @@ static int lsockaddr_tostring(lua_State *L){
     return 1;
 }
 
-LEMOON_API void lemoonL_pushsockaddr(lua_State *L, struct sockaddr* addr, size_t len){
+LEMOON_API void lemoon_pushsockaddr(lua_State *L, struct sockaddr* addr, size_t len){
 
     lsockaddr *target = lua_newuserdata(L, sizeof(lsockaddr) +len);
 
@@ -116,7 +116,7 @@ LEMOON_API void lemoon_getaddrinfo(lua_State *L, const char* host, const char* s
     int i = 1;
 
     for (struct addrinfo* iter = target; iter != NULL; iter = iter->ai_next){
-        lemoonL_pushsockaddr(L, iter->ai_addr, (socklen_t) iter->ai_addrlen);
+        lemoon_pushsockaddr(L, iter->ai_addr, (socklen_t) iter->ai_addrlen);
         lua_rawseti(L, -2, i++);
     }
 
