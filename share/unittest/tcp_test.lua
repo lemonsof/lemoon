@@ -47,22 +47,19 @@ end
 function server_echo(conn)
 	conn:recv (56 , function ( err, msg )
 		if err ~= nil  then
-			print(string.format("TCPServer Connection(%s) recv error :%s", conn, err))
+			--print(string.format("TCPServer Connection(%s) recv error :%s", conn, err))
 		elseif #msg == 0 then
-			print(string.format("TCPServer Connection(%s) remote close connection", conn))
+			--print(string.format("TCPServer Connection(%s) remote close connection", conn))
 			conn:close()
 		else
-			print(string.format("TCPServer Connection(%s) recv msg :%s", conn, msg))
-			conn:send("+PONG\n",function( err )
-				if err ~= nil  then
-					print(string.format("TCPServer Connection(%s) send echo msg -- failed\n\t%s", conn, err))
-				else
-					print(string.format("TCPServer Connection(%s) send echo msg -- success", conn, msg))
+			--print(string.format("TCPServer Connection(%s) recv msg :%s", conn, msg))
+			if pcall(conn.send,conn,"+PONG\r\n") then
+				if not pcall(server_echo,conn) then
+					conn:close()
 				end
-				
-			end)
-			
-			server_echo(conn)
+			else
+				conn:close()
+			end
 		end
 	end)	
 end
