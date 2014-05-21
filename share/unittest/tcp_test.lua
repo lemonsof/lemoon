@@ -7,7 +7,7 @@ local datetime = require "lemoon.datetime"
 
 local server = io:sock(2,1)
 
-server:bind("localhost","13512")
+server:bind("0.0.0.0","13512")
 
 server:listen()
 
@@ -24,24 +24,24 @@ function make_echo(conn, times, timestamp)
 			if times > 0 then
 				make_echo( conn, times -1, timestamp )
 			else
-				print(string.format("TCPClient Connection(%s) done : %d ms", conn,datetime.duration(lemoon.now(),timestamp)))
+				print(string.format("TCPClient Connection(%s) done : %d ms", conn,datetime.duration(lemoon.now(),timestamp)/10000))
 				conn:close()				
 			end
 		end
 	end)	
 end
 
-for i = 0,10 do 
-	local client = io:sock(2,1)
-	client:connect("127.0.0.1","13512",function( err )
-		if err ~= nil then
-			print(string.format("tcp(%s) connect failed :%s",client,err))
-		else
-			--print("connection created",client)
-			make_echo(client,10 , lemoon.now())
-		end
-	end)
-end
+--for i = 0,200 do 
+--	local client = io:sock(2,1)
+--	client:connect("127.0.0.1","13512",function( err )
+--		if err ~= nil then
+--			print(string.format("tcp(%s) connect failed :%s",client,err))
+--		else
+--			--print("connection created",client)
+--			make_echo(client,10000 , lemoon.now())
+--		end
+--	end)
+--end
 
 
 function server_echo(conn)
@@ -49,11 +49,19 @@ function server_echo(conn)
 		if err ~= nil  then
 			print(string.format("TCPServer Connection(%s) recv error :%s", conn, err))
 		elseif #msg == 0 then
-			--print(string.format("TCPServer Connection(%s) remote close connection", conn))
+			print(string.format("TCPServer Connection(%s) remote close connection", conn))
+			conn:close()
 		else
-			--print(string.format("TCPServer Connection(%s) recv msg :%s", conn, msg))
-			conn:send(msg)
-			--print(string.format("TCPServer Connection(%s) send echo msg :%s", conn, msg))
+			print(string.format("TCPServer Connection(%s) recv msg :%s", conn, msg))
+			conn:send("+PONG\n",function( err )
+				if err ~= nil  then
+					print(string.format("TCPServer Connection(%s) send echo msg -- failed\n\t%s", conn, err))
+				else
+					print(string.format("TCPServer Connection(%s) send echo msg -- success", conn, msg))
+				end
+				
+			end)
+			
 			server_echo(conn)
 		end
 	end)	
@@ -73,5 +81,4 @@ end
 
 server:accept(accept)
 
-
---util:run(10000000000)
+util:run(10000000000)
