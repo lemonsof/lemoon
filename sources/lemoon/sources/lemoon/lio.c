@@ -102,11 +102,10 @@ LEMOON_PRIVATE lio* lioB_new(lua_State *L, size_t len, const luaL_Reg * funcs, l
 }
 LEMOON_PRIVATE void lioB_close(lua_State *L, lio* io)
 {
-    L;
     if(io->array) free(io->array);
 }
 
-static int __lfile_tostring(lua_State *L)
+static int __lfile_tostring(lua_State * L)
 {
     lfile * file = lua_touserdata(L, 1);
     lua_pushfstring(L, "file(%d)",file->handle);
@@ -117,13 +116,13 @@ static int __lfile_tostring(lua_State *L)
 LEMOON_PRIVATE lfile* lioB_newfile(
     lua_State *L, 
     size_t len, 
-    int index, 
+    lio *io,
     int fd, 
     const char* tname, 
     const luaL_Reg * funcs, 
     lua_CFunction closef)
 {
-    lio * io = luaL_checkudata(L, index, LEMOON_REG(LEMOON_IO));
+
 
     if (((double)io->files / (double)io->buckets)  > 0.5)
     {
@@ -164,6 +163,8 @@ LEMOON_PRIVATE lfile* lioB_newfile(
 
     size_t hashcode = lioB_hash(fd, io->buckets);
     
+    //printf("add file(hashcode:%zu) :%d\n",hashcode,fd);
+    
     file->handle = fd;
 
     file->io = ref;
@@ -176,12 +177,16 @@ LEMOON_PRIVATE lfile* lioB_newfile(
     {
         io->array[hashcode]->prev = &file->next;
     }
+    
+    io->array[hashcode] = file;
 
     return file;
 }
 
 LEMOON_PRIVATE void lioB_closefile(lua_State *L, lfile* file)
 {
+    //printf("remove file :%d\n",file->handle);
+    
     if(file->next)
     {
         file->next->prev = file->prev;
@@ -205,7 +210,9 @@ LEMOON_PRIVATE void lioB_closefile(lua_State *L, lfile* file)
 
 LEMOON_PRIVATE lfile* lioB_searchfile(lio* io, int fd)
 {
+    
     size_t hashcode = lioB_hash(fd, io->buckets);
+    //printf("search file(hashcode:%zu) :%d\n",hashcode,fd);
 
     lfile * current = io->array[hashcode];
 
@@ -241,6 +248,7 @@ LEMOON_PRIVATE lirp* lioB_newwrite(lua_State *L, size_t len, lfile *file, iocomp
     }
 
     irp->prev = &file->writeQ;
+    file->writeQ = irp;
 
     return irp;
 }
@@ -264,6 +272,7 @@ LEMOON_PRIVATE lirp* lioB_newread(lua_State *L, size_t len, lfile *file, iocompl
     }
     
     irp->prev = &file->readQ;
+    file->readQ = irp;
 
     return irp;
 }
@@ -350,3 +359,142 @@ LEMOON_PRIVATE void read_complete(lua_State *L, lirprw * irp, size_t bytes, cons
 
     lioB_closeirp(L, (lirp*) irp);
 }
+
+
+LEMOON_PRIVATE int lio_newsock(lua_State *L)
+{
+    luaL_checkstack(L, 3, NULL);
+    
+    lemoon_newsock(L, 1, luaL_checkinteger(L, 2), luaL_checkinteger(L, 3), luaL_optinteger(L, 4, 0));
+    
+    return 1;
+}
+
+
+
+LEMOON_PRIVATE int lio_bind(lua_State *L)
+{
+    
+    luaL_checkstack(L, 3, NULL);
+    
+    lsock *sock = luaL_checkudata(L, 1, LEMOON_REG(LEMOON_SOCK));
+    
+    const char * host = luaL_checkstring(L, 2);
+    
+    const char * service = luaL_checkstring(L, 3);
+    
+    lemoon_getaddrinfo(L, host, service, sock->af, sock->type, AI_PASSIVE);
+    
+    size_t length = lua_rawlen(L, -1);
+    lua_pushnil(L);
+    
+    for (int i = 1; i <= length; ++i)
+    {
+        lua_pop(L, 1);
+        lua_rawgeti(L, -1, i);
+        size_t len;
+        struct sockaddr * addr = lemoon_tosockaddr(L, -1, &len);
+        lua_pop(L, 1);
+        if (0 == lemoon_bind(L,1,addr,len))
+        {
+            return 0;
+        }
+    }
+    
+    lemoonL_pusherror(L, "can't bind to address[%s,%s]\n",host,service);
+    lua_concat(L, 2);
+    return luaL_error(L,lua_tostring(L,-1));
+}
+
+LEMOON_PRIVATE int lio_listen(lua_State *L)
+{
+    lemoon_listen(L, 1, luaL_optinteger(L, 2, SOMAXCONN));
+    return 0;
+}
+
+
+LEMOON_PRIVATE int lio_accept(lua_State *L)
+{
+    luaL_checkstack(L, 2,NULL);
+    luaL_checktype(L, 2, LUA_TFUNCTION);
+    lua_pushvalue(L, 2);
+    lemoon_accept(L, 1,luaL_ref(L,LUA_REGISTRYINDEX));
+    return 0;
+}
+
+LEMOON_PRIVATE int lio_connect(lua_State *L)
+{
+    luaL_checkstack(L, 4, NULL);
+    
+    luaL_checktype(L, 4, LUA_TFUNCTION);
+    
+    lsock *sock = luaL_checkudata(L, 1, LEMOON_REG(LEMOON_SOCK));
+    
+    const char * host = luaL_checkstring(L, 2);
+    
+    const char * service = luaL_checkstring(L, 3);
+    
+    lemoon_getaddrinfo(L, host, service, sock->af, sock->type, AI_PASSIVE);
+    
+    size_t length = lua_rawlen(L, -1);
+    
+    lua_pushnil(L);
+    
+    for (int i = 1; i <= length; ++i)
+    {
+        lua_pop(L, 1);
+        lua_rawgeti(L, -1, i);
+        size_t len;
+        struct sockaddr * addr = lemoon_tosockaddr(L, -1, &len);
+        lua_pop(L, 1);
+        lua_pushvalue(L, 4);
+        int handle = lemoon_connect(L, 1, addr, len);
+        if (handle >= 0)
+        {
+            return handle;
+        }
+    }
+    
+    lemoonL_pusherror(L, "can't bind to address[%s,%s]\n", host, service);
+    lua_concat(L, 2);
+    return luaL_error(L,lua_tostring(L,-1));
+}
+
+
+LEMOON_PRIVATE int lio_send(lua_State *L)
+{
+    luaL_checkstack(L, 4, NULL);
+    //liocpsock *sock = luaL_checkudata(L, 1, LEMOON_REG(LEMOON_SOCK));
+    size_t len;
+    const char *buff = luaL_checklstring(L, 2, &len);
+    int callback = LUA_NOREF;
+    int flags = 0;
+    if(lua_type(L,3) == LUA_TFUNCTION)
+    {
+        lua_pushvalue(L, 3);
+        callback = luaL_ref(L, LUA_REGISTRYINDEX);
+        flags = luaL_optinteger(L, 4,0);
+    }
+    else
+    {
+        flags = luaL_optinteger(L, 3, 0);
+    }
+    
+    lua_pushinteger(L,lemoon_send(L, 1, callback, buff, len, flags));
+    return 1;
+}
+
+LEMOON_PRIVATE int lio_recv(lua_State *L)
+{
+    luaL_checkstack(L, 4, NULL);
+    luaL_checktype(L, 3, LUA_TFUNCTION);
+    //liocpsock *sock = luaL_checkudata(L, 1, LEMOON_REG(LEMOON_SOCK));
+    size_t len = luaL_checkinteger(L, 2);
+    lua_pushvalue(L, 3);
+    int callback = luaL_ref(L, LUA_REGISTRYINDEX);
+    lua_pushinteger(L, lemoon_recv(L, 1, callback, len, luaL_optinteger(L,4,0)));
+    return 1;
+}
+
+
+

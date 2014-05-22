@@ -18,20 +18,20 @@ function make_echo(conn, times, timestamp)
 		if err ~= nil  then
 			print(string.format("TCPClient Connection(%s) recv error :%s", conn, err))
 		elseif #msg == 0 then
-			--print(string.format("TCPClient Connection(%s) remote close connection", conn))
+			print(string.format("TCPClient Connection(%s) remote close connection", conn))
 		else
 			--print(string.format("TCPClient Connection(%s) recv echo msg :%s", conn, msg))
 			if times > 0 then
 				make_echo( conn, times -1, timestamp )
 			else
-				print(string.format("TCPClient Connection(%s) done : %d ms", conn,datetime.duration(lemoon.now(),timestamp)/10000))
+				print(string.format("TCPClient Connection(%s) done : %d ms", conn,datetime.duration(lemoon.now(),timestamp)))
 				conn:close()				
 			end
 		end
 	end)	
 end
 
---for i = 0,200 do 
+--for i = 0,1 do 
 --	local client = io:sock(2,1)
 --	client:connect("127.0.0.1","13512",function( err )
 --		if err ~= nil then
@@ -45,11 +45,12 @@ end
 
 
 function server_echo(conn)
+	
 	conn:recv (56 , function ( err, msg )
 		if err ~= nil  then
-			--print(string.format("TCPServer Connection(%s) recv error :%s", conn, err))
+			print(string.format("TCPServer Connection(%s) recv error :%s", conn, err))
 		elseif #msg == 0 then
-			--print(string.format("TCPServer Connection(%s) remote close connection", conn))
+			print(string.format("TCPServer Connection(%s) remote close connection", conn))
 			conn:close()
 		else
 			--print(string.format("TCPServer Connection(%s) recv msg :%s", conn, msg))
@@ -69,7 +70,7 @@ function accept( err, conn, remote )
 	if err ~= nil then
 		print("accept failed " .. err)
 	else 
-		--print(string.format("accept connect(%s) from:%s ", conn, remote))
+		print(string.format("accept connect(%s) from:%s ", conn, remote))
 		server_echo(conn)
 	end 
 

@@ -87,45 +87,6 @@ static SOCKET __sock(lua_State *L, HANDLE iocp, int af, int type, int protocol){
     return handle;
 }
 
-static int liocpsock_bind(lua_State *L)
-{
-    luaL_checkstack(L, 3, NULL);
-
-    liocpsock *sock = luaL_checkudata(L, 1, LEMOON_REG(LEMOON_SOCK));
-
-    const char * host = luaL_checkstring(L, 2);
-
-    const char * service = luaL_checkstring(L, 3);
-
-    lemoon_getaddrinfo(L, host, service, sock->af, sock->type, AI_PASSIVE);
-
-    size_t length = lua_rawlen(L, -1);
-    lua_pushnil(L);
-
-    for (int i = 1; i <= length; ++i)
-    {
-        lua_pop(L, 1);
-        lua_rawgeti(L, -1, i);
-        size_t len;
-        struct sockaddr * addr = lemoon_tosockaddr(L, -1, &len);
-        lua_pop(L, 1);
-        if (0 == lemoon_bind(L,1,addr,len))
-        {
-            return 0;
-        }
-    }
-
-    lemoonL_pusherror(L, "can't bind to address[%s,%s]\n",host,service);
-    lua_concat(L, 2);
-    return luaL_error(L,lua_tostring(L,-1));
-}
-
-static int liocp_listen(lua_State *L)
-{
-    lemoon_listen(L, 1, luaL_optinteger(L, 2, SOMAXCONN));
-    return 0;
-}
-
 static int liocp_accept(lua_State *L)
 {
     luaL_checkstack(L, 2,NULL);
@@ -173,28 +134,6 @@ static int liocp_connect(lua_State *L)
     return luaL_error(L,lua_tostring(L,-1));
 }
 
-static int liocp_send(lua_State *L)
-{
-    luaL_checkstack(L, 4, NULL);
-    //liocpsock *sock = luaL_checkudata(L, 1, LEMOON_REG(LEMOON_SOCK));
-    size_t len;
-    const char *buff = luaL_checklstring(L, 2, &len);
-    int callback = LUA_NOREF;
-    int flags = 0;
-    if(lua_type(L,3) == LUA_TFUNCTION)
-    {
-        lua_pushvalue(L, 3);
-        callback = luaL_ref(L, LUA_REGISTRYINDEX);
-        flags = luaL_optinteger(L, 4,0);
-    }
-    else 
-    {
-        flags = luaL_optinteger(L, 3, 0);
-    }
-
-    lua_pushinteger(L,lemoon_send(L, 1, callback, buff, len, flags));
-    return 1;
-}
 
 static int liocp_sendto(lua_State *L)
 {
@@ -258,17 +197,6 @@ static int liocp_sendto(lua_State *L)
     return 0;
 }
 
-static int liocp_recv(lua_State *L)
-{
-    luaL_checkstack(L, 4, NULL);
-    luaL_checktype(L, 3, LUA_TFUNCTION);
-    //liocpsock *sock = luaL_checkudata(L, 1, LEMOON_REG(LEMOON_SOCK));
-    size_t len = luaL_checkinteger(L, 2);
-    lua_pushvalue(L, 3);
-    int callback = luaL_ref(L, LUA_REGISTRYINDEX);
-    lua_pushinteger(L, lemoon_recv(L, 1, callback, len, luaL_optinteger(L,4,0)));
-    return 1;
-}
 
 static int liocp_recvfrom(lua_State *L)
 {
@@ -285,15 +213,15 @@ static int liocp_recvfrom(lua_State *L)
 
 const static luaL_Reg liocpsock_funcs [] =
 {
-    { "send", liocp_send },
-    { "recv", liocp_recv},
-    { "sendto", liocp_sendto },
-    { "recvfrom", liocp_recvfrom },
-    { "listen", liocp_listen },
-    { "connect", liocp_connect },
+    { "send", lio_send },
+    { "recv", lio_recv},
+    { "sendto", lio_sendto },
+    { "recvfrom", lio_recvfrom },
+    { "listen", lio_listen },
+    { "connect", lio_connect },
     { "close", lemoon_closesock },
-    { "accept", liocp_accept },
-    {"bind",liocpsock_bind},
+    { "accept", lio_accept },
+    {"bind",lio_bind},
     { NULL, NULL }
 };
 

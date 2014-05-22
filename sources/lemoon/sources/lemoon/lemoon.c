@@ -49,6 +49,8 @@ static int lemoon_gettimeofday(lua_State *L){
         lemoonL_sysmerror(L,errno,"call gettimeofday exception");
     }
 
+    lua_newtable(L);
+    
     lua_pushinteger(L,val.tv_sec);
     
     lua_setfield(L, -2, "tv_sec");

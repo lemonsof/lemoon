@@ -4,16 +4,6 @@
 
 //////////////////////////////////////////////////////////////////////////
 
-
-static int liocp_newsock(lua_State *L)
-{
-    luaL_checkstack(L, 3, NULL);
-    
-    lemoon_newsock(L, 1, luaL_checkinteger(L, 2), luaL_checkinteger(L, 3), luaL_optinteger(L, 4, 0));
-
-    return 1;
-}
-
 static int liocp_dispatch(lua_State *L){
 
     luaL_checkstack(L, 2, NULL);
@@ -59,7 +49,7 @@ static int liocp_dispatch(lua_State *L){
 const static luaL_Reg lio_funcs[] = 
 {
     {"dispatch",liocp_dispatch},
-    { "sock", liocp_newsock },
+    { "sock", lio_newsock },
     {NULL,NULL}
 };
 

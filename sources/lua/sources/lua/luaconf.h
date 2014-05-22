@@ -10,7 +10,7 @@
 
 #include <limits.h>
 #include <stddef.h>
-
+#include <lua/configure.h>
 
 /*
 ** ==================================================================
@@ -106,8 +106,16 @@
 #define LUA_PATH_DEFAULT  \
 		LUA_LDIR"?.lua;"  LUA_LDIR"?/init.lua;" \
 		LUA_CDIR"?.lua;"  LUA_CDIR"?/init.lua;" "./?.lua"
+#ifdef LUA_USE_MACOSX
 #define LUA_CPATH_DEFAULT \
-		LUA_CDIR"?.so;" LUA_CDIR"loadall.so;" "./?.so"
+		LUA_CDIR"lib?.dylib;" LUA_CDIR"libloadall.dylib;" "./lib?.dylib;" "../lib/lib?.dylib"
+#else
+#define LUA_CPATH_DEFAULT \
+        LUA_CDIR"lib?.so;" LUA_CDIR"libloadall.so;" "./lib?.so;" "../lib/lib?.so"
+#endif
+
+
+
 #endif			/* } */
 
 
@@ -140,7 +148,7 @@
 ** the libraries, you may want to use the following definition (define
 ** LUA_BUILD_AS_DLL to get it).
 */
-#include <lua/configure.h>
+
 
 
 

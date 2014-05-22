@@ -71,6 +71,8 @@ LEMOON_API void lemoon_pushsockaddr(lua_State *L, struct sockaddr* addr, size_t 
     memcpy(target->data, addr, len);
 
     if (luaL_newmetatable(L, LEMOON_REG(LEMOON_SOCKADDR))){
+        luaL_newlib(L, lsocketaddr_funcs);
+        lua_setfield(L, -2, "__index");
         lua_pushcfunction(L, &lsockaddr_tostring);
         lua_setfield(L, -2, "__tostring");
     }

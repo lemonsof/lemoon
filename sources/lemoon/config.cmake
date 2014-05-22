@@ -1,3 +1,5 @@
+INCLUDE (CheckIncludeFiles)
+
 if(WIN32)
 
 	if(LEMON_BUILD_TARGET_WXP) 
@@ -21,5 +23,9 @@ if(WIN32)
 		set(NTDDI_VERSION NTDDI_WIN7)
 		set(_WIN32_IE 0x0700)
 	endif()
-
+elseif(APPLE)
+	set(LUA_USE_MACOSX TRUE)
 endif(WIN32)
+
+CHECK_INCLUDE_FILES (sys/event.h LEMOON_KQUEUE_H)
+
