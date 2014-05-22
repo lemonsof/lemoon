@@ -54,6 +54,7 @@ extern "C" {
 #define LEMOON_FILE                                 "file"
 #define LEMOON_FS                                   "fs"
 #define LEMOON_REG(N)                               LEMOON_MODULE "." N
+#define LEMOON_SOCKADDR_MAXLEN                      56
 
 
 
