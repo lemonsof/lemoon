@@ -33,25 +33,31 @@ static int __epoll_dispatch(lua_State *L)
             if(events[0].events & EPOLLERR)
                 //close all pending io
             {
-                lfile_process_rwQ(L,(lio*)io, file->readQ,errno);
-                lfile_process_rwQ(L,(lio*)io, file->writeQ,errno);
+                if (errno != EINPROGRESS &&  errno != EAGAIN)
+                {
+                    lfile_process_rwQ(L,(lio*)io, file->readQ,errno);
+                    lfile_process_rwQ(L,(lio*)io, file->writeQ,errno);
+                    lio_dispatchcomplete(L, (lio*)io);
+                    return 0;
+                }
+            
             }
-            else
+            
+            if(events[0].events & EPOLLIN)
             {
-                if(events[0].events & EPOLLIN)
-                {
-                    lfile_process_rwQ(L,(lio*)io, file->readQ,0);
-                }
-        
-                if(events[0].events & EPOLLOUT)
-                {
-                    lfile_process_rwQ(L,(lio*)io, file->writeQ,0);
-                }
+                lfile_process_rwQ(L,(lio*)io, file->readQ,0);
             }
+        
+            if(events[0].events & EPOLLOUT)
+            {
+               lfile_process_rwQ(L,(lio*)io, file->writeQ,0);
+            }    
         }
         
         lio_dispatchcomplete(L, (lio*)io);
     }
+    
+    return 0;
 }
 
 static int __epoll_close(lua_State *L)

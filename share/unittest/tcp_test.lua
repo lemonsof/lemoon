@@ -50,10 +50,10 @@ function server_echo(conn)
 	
 	conn:recv (56 , function ( err, msg )
 		if err ~= nil  then
-			print(string.format("TCPServer Connection(%s) recv error :%s", conn, err))
+			--print(string.format("TCPServer Connection(%s) recv error :%s", conn, err))
 			conn:close()
 		elseif #msg == 0 then
-			print(string.format("TCPServer Connection(%s) remote close connection", conn))
+			--print(string.format("TCPServer Connection(%s) remote close connection", conn))
 			conn:close()
 		else
 			--print(string.format("TCPServer Connection(%s) recv msg :%s", conn, msg))
