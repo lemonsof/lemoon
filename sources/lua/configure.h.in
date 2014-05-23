@@ -1,1 +1,2 @@
-#cmakedefine LUA_USE_MACOSX
+#include <fcntl.h> 
+#include <unistd.h>

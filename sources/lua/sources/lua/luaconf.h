@@ -7,10 +7,10 @@
 
 #ifndef lconfig_h
 #define lconfig_h
-
+#include <lua/configure.h>
 #include <limits.h>
 #include <stddef.h>
-#include <lua/configure.h>
+
 
 /*
 ** ==================================================================

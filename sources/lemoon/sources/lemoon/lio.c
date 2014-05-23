@@ -106,7 +106,9 @@ LEMOON_PRIVATE lio* lio_new(lua_State *L,size_t len,const luaL_Reg * funcs,lua_C
     
     if(luaL_newmetatable(L , LEMOON_REG(LEMOON_IO)))
     {
-        luaL_newlib(L, funcs);
+        lua_newtable(L);
+        
+        luaL_setfuncs(L,funcs,0);
         
         lua_setfield(L, -2, "__index");
         
@@ -142,7 +144,9 @@ LEMOON_PRIVATE lfile* lfile_new(lua_State *L, lio * io, size_t len, const char *
     
     if (luaL_newmetatable(L, tname))
     {
-        luaL_newlib(L, funcs);
+        lua_newtable(L);
+        
+        luaL_setfuncs(L,funcs,0);
         
         lua_setfield(L, -2, "__index");
         

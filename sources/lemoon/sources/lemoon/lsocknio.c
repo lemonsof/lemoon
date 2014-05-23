@@ -55,7 +55,7 @@ static int __iocall(lua_State *L, lio * io, lirp * irp)
             lemoonL_error(L, "__iocall",lua_tostring(L, -1));
         }
         
-        return irp;
+        return 1;
     }
 
 }
@@ -68,15 +68,18 @@ static int __socknio(lua_State *L, lio * io, int fd, int domain, int type, int p
     {
         lemoonL_sysmerror(L,errno,"can't create sock(%d,%d,%d)",domain, type, protocol);
     }
-    int set = 1;
     
+#ifdef LEMOON_KQUEUE_H
+    int set = 1;
+
     if(0 != setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, (void *)&set, sizeof(int)))
     {
         close(fd);
         lemoonL_sysmerror(L,errno,"set SO_NOSIGPIPE io failed:%s");
     }
+#endif //
     
-    if(fcntl(fd, F_SETFL, fcntl(fd,F_GETFL,0) | O_NONBLOCK | SO_NOSIGPIPE) < 0)
+    if(fcntl(fd, F_SETFL, fcntl(fd,F_GETFL,0) | O_NONBLOCK ) < 0)
     {
         close(fd);
         lemoonL_sysmerror(L,errno,"set NOBLOCK io failed:%s");
@@ -322,7 +325,7 @@ static int __recvfrom(lua_State *L, lio* io, lirp * irp)
     ssize_t recvbytes = recvfrom(
                                  irp->file->fd,
                                  sockirp->buff,
-                                 &sockirp->bufflen,
+                                 sockirp->bufflen,
                                  sockirp->unknown.flags,
                                  (struct sockaddr*)sockirp->addr,&sockirp->addrlen);
     if(recvbytes == -1)

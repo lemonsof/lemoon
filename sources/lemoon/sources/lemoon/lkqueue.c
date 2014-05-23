@@ -1,5 +1,6 @@
 #include <unistd.h>
 #include <lemoon/lio.h>
+#ifdef LEMOON_KQUEUE_H
 #include <sys/event.h>
 #include <lemoon/lsock.h>
 
@@ -96,5 +97,7 @@ LEMOON_PRIVATE int lfile_register(lua_State *L,lio * io, int fd)
     
     return LEMOON_SUCCESS;
 }
+
+#endif //KQUEUE
 
 

@@ -1,6 +1,6 @@
 #define LEMOON_SOURCE_ROOT "${CMAKE_SOURCE_DIR}"
 #cmakedefine LEMOON_KQUEUE_H
-#cmakedefine LUA_USE_MACOSX
+#cmakedefine LEMOON_HAS_EPOLL_H
 
 #ifdef WIN32
 #	define WIN32_WINNT			${WIN32_WINNT} 			
