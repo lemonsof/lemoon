@@ -80,7 +80,7 @@ static void __io_resize(lua_State *L, lio* io, size_t len){
 static int __lfile_tostring(lua_State *L)
 {
     lfile * file = lua_touserdata(L, 1);
-    lua_pushfstring(L, "lfile(%d)",file->fd);
+    lua_pushfstring(L, "lfile(%p,%d)",file,file->fd);
     return 1;
 }
 
@@ -102,7 +102,7 @@ LEMOON_PRIVATE lio* lio_new(lua_State *L,size_t len,const luaL_Reg * funcs,lua_C
     
     lio * io = lua_newuserdata(L, len);
     
-    memset(io,0,sizeof(lio));
+    memset(io,0,len);
     
     if(luaL_newmetatable(L , LEMOON_REG(LEMOON_IO)))
     {
@@ -115,7 +115,7 @@ LEMOON_PRIVATE lio* lio_new(lua_State *L,size_t len,const luaL_Reg * funcs,lua_C
         lua_setfield(L, -2, "__gc");
     }
     
-    lua_setmetatable(L, -1);
+    lua_setmetatable(L, -2);
     
     __io_resize(L, io, 56);
     
@@ -128,8 +128,6 @@ LEMOON_PRIVATE lfile* lfile_new(lua_State *L, lio * io, size_t len, const char *
     {
         __io_resize(L, io, io->buckets * 2);
     }
-    
-    lua_pushvalue(L, index);
     
     lfile * file = lfile_search(io, fd);
     
@@ -167,6 +165,8 @@ LEMOON_PRIVATE lfile* lfile_new(lua_State *L, lio * io, size_t len, const char *
     
     file->prev = &io->files[hashcode];
     
+    file->io = io;
+    
     if(io->files[hashcode])
     {
         io->files[hashcode]->prev = &file->next;
@@ -196,4 +196,234 @@ LEMOON_PRIVATE lfile* lfile_search(lio * io, int fd)
     
     return current;
 }
+
+
+
+LEMOON_PRIVATE void lfile_close(lua_State *L, lfile * file)
+{
+    if(file->next)
+    {
+        file->next->prev = file->prev;
+    }
+    
+    if(file->prev)
+    {
+        *file->prev = file->next;
+    }
+    
+    //then cancel all the pending io
+    lirp * irp = file->readQ;
+    
+    while(irp)
+    {
+        lirp * next = irp->next;
+        
+        irp->canceled = 1;
+        
+        irp->next = NULL;
+        
+        lio_newcomplete(file->io,irp);
+        
+        irp = next;
+    }
+    
+    irp = file->writeQ;
+    
+    while(irp)
+    {
+        lirp * next = irp->next;
+        
+        irp->canceled = 1;
+        
+        irp->next = NULL;
+        
+        lio_newcomplete(file->io,irp);
+        
+        irp = next;
+    }
+}
+
+LEMOON_PRIVATE void lio_newcomplete(lio *io, lirp * irp)
+{
+    irp->next = io->completeQ;
+    
+    irp->prev = &io->completeQ;
+    
+    if(io->completeQ)
+    {
+        io->completeQ->prev = &irp->next;
+    }
+    
+    io->completeQ = irp;
+}
+
+LEMOON_PRIVATE void lio_dispatchcomplete(lua_State *L, lio *io)
+{
+    lirp  * irp = io->completeQ;
+    
+    int errcode;
+    
+    while(irp)
+    {
+        io->completeQ = irp->next;
+        
+        if(irp->next)
+        {
+            irp->next->prev = &io->completeQ;
+        }
+        
+        errcode = irp->complete(L, io, irp);
+        
+        lirp_close(L,irp);
+        
+        if(errcode == LEMOON_RUNTIME_ERROR)
+        {
+            lemoonL_error(L, "%s",lua_tostring(L, -1));
+        }
+        
+        irp = io->completeQ;
+    }
+}
+
+
+LEMOON_PRIVATE void* lirp_newrite(lua_State *L, lfile * file, size_t len,lioproc proc, liocomplete complete, int callback)
+{
+    assert(len >= sizeof(lirp));
+    
+    lirp * irp = malloc(len);
+    
+    if(!irp)
+    {
+        lemoonL_error(L, "can't allocate irp object for lfile(%p,%d)",file,file->fd);
+    }
+    
+    memset(irp, 0, len);
+    irp->errmsg = LUA_NOREF;
+    irp->callback = callback;
+    irp->complete = complete;
+    irp->proc = proc;
+    irp->file = file;
+    irp->next = file->writeQ;
+    irp->prev = &file->writeQ;
+    if(file->writeQ)
+    {
+        file->writeQ->prev = &irp->next;
+    }
+    file->writeQ = irp;
+    return irp;
+}
+
+LEMOON_PRIVATE void* lirp_newread(lua_State *L, lfile * file, size_t len, lioproc proc,liocomplete complete, int callback)
+{
+    assert(len >= sizeof(lirp));
+    
+    lirp * irp = malloc(len);
+    
+    if(!irp)
+    {
+        lemoonL_error(L, "can't allocate irp object for lfile(%p,%d)",file,file->fd);
+    }
+    
+    memset(irp, 0, len);
+    irp->errmsg = LUA_NOREF;
+    irp->callback = callback;
+    irp->complete = complete;
+    irp->proc = proc;
+    irp->file = file;
+    irp->next = file->readQ;
+    irp->prev = &file->readQ;
+    if(file->readQ)
+    {
+        file->readQ->prev = &irp->next;
+    }
+    file->readQ = irp;
+    return irp;
+
+}
+
+LEMOON_PRIVATE void lirp_close(lua_State*L ,lirp * irp)
+{
+    if(irp->callback != LUA_NOREF)
+    {
+        luaL_unref(L, LUA_REGISTRYINDEX, irp->callback);
+        irp->callback = LUA_NOREF;
+    }
+    
+    if(irp->errmsg != LUA_NOREF)
+    {
+        luaL_unref(L, LUA_REGISTRYINDEX, irp->errmsg);
+        irp->errmsg = LUA_NOREF;
+    }
+    
+    free(irp);
+}
+
+
+
+LEMOON_PRIVATE void lfile_process_rwQ(lua_State *L, lio *io, lirp * Q, int errcode)
+{
+    lirp * current = Q;
+ 
+    if(errcode != 0)
+    {
+        while(current)
+        {
+            lirp * next = current->next;
+            
+            if(next)
+            {
+                next->prev = current->prev;
+            }
+            
+            *current->prev = next;
+            
+            lemoonL_pushsysmerror(L, errcode, "async io error");
+            
+            current->errmsg = luaL_ref(L, LUA_REGISTRYINDEX);
+            
+            lio_newcomplete(io, current);
+            
+            current = next;
+        }
+    }
+    else
+    {
+        while(current)
+        {
+            int ret = current->proc(L, io, current);
+            
+            if(ret == LEMOON_EAGIN)
+            {
+                break;
+            }
+            
+            lirp * next = current->next;
+            
+            if(next)
+            {
+                next->prev = current->prev;
+            }
+            
+            *current->prev = next;
+            
+            if(ret == LEMOON_RUNTIME_ERROR)
+            {
+                current->errmsg = luaL_ref(L, LUA_REGISTRYINDEX);
+            }
+            
+            lio_newcomplete(io, current);
+            
+            current = next;
+        }
+    }
+    
+    
+}
+
+
+
+
+
+
+
 

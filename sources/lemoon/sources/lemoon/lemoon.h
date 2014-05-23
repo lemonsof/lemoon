@@ -56,7 +56,10 @@ extern "C" {
 #define LEMOON_REG(N)                               LEMOON_MODULE "." N
 #define LEMOON_SOCKADDR_MAXLEN                      56
 
-
+#define LEMOON_SUCCESS                              0
+#define LEMOON_EAGIN                                -1
+#define LEMOON_RUNTIME_ERROR                        -2
+#define LEMOON_NOFUTURE                             -1
 
 //////////////////////////////////////////////////////////////////////////
 //lemoon core APIs

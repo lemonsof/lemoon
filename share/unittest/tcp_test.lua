@@ -17,8 +17,10 @@ function make_echo(conn, times, timestamp)
 	conn:recv (56 , function ( err, msg )
 		if err ~= nil  then
 			print(string.format("TCPClient Connection(%s) recv error :%s", conn, err))
+			conn:close()
 		elseif #msg == 0 then
 			print(string.format("TCPClient Connection(%s) remote close connection", conn))
+			conn:close()
 		else
 			--print(string.format("TCPClient Connection(%s) recv echo msg :%s", conn, msg))
 			if times > 0 then
@@ -31,26 +33,27 @@ function make_echo(conn, times, timestamp)
 	end)	
 end
 
---for i = 0,1 do 
---	local client = io:sock(2,1)
---	client:connect("127.0.0.1","13512",function( err )
---		if err ~= nil then
---			print(string.format("tcp(%s) connect failed :%s",client,err))
---		else
---			--print("connection created",client)
---			make_echo(client,10000 , lemoon.now())
---		end
---	end)
---end
+for i = 0,10 do 
+	local client = io:sock(2,1)
+	client:connect("127.0.0.1","13512",function( err )
+		if err ~= nil then
+			print(string.format("tcp(%s) connect failed :%s",client,err))
+		else
+			print("connection created",client)
+			make_echo(client,10000 , lemoon.now())
+		end
+	end)
+end
 
 
 function server_echo(conn)
 	
 	conn:recv (56 , function ( err, msg )
 		if err ~= nil  then
-			print(string.format("TCPServer Connection(%s) recv error :%s", conn, err))
+			--print(string.format("TCPServer Connection(%s) recv error :%s", conn, err))
+			conn:close()
 		elseif #msg == 0 then
-			print(string.format("TCPServer Connection(%s) remote close connection", conn))
+			--print(string.format("TCPServer Connection(%s) remote close connection", conn))
 			conn:close()
 		else
 			--print(string.format("TCPServer Connection(%s) recv msg :%s", conn, msg))
@@ -59,6 +62,7 @@ function server_echo(conn)
 					conn:close()
 				end
 			else
+				--print("send failed")
 				conn:close()
 			end
 		end
@@ -70,8 +74,10 @@ function accept( err, conn, remote )
 	if err ~= nil then
 		print("accept failed " .. err)
 	else 
-		print(string.format("accept connect(%s) from:%s ", conn, remote))
-		server_echo(conn)
+		--print(string.format("accept connect(%s) from:%s ", conn, remote))
+		if not pcall(server_echo,conn) then
+			conn:close()
+		end
 	end 
 
 	server:accept(accept)
@@ -79,4 +85,4 @@ end
 
 server:accept(accept)
 
-util:run(10000000000)
+--util:run(10000000000)
