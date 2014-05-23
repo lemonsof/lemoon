@@ -1,6 +1,7 @@
-#include <unistd.h>
+
 #include <lemoon/lio.h>
 #ifdef LEMOON_KQUEUE_H
+#include <unistd.h>
 #include <sys/event.h>
 #include <lemoon/lsock.h>
 

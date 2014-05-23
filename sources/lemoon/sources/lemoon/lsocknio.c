@@ -156,7 +156,7 @@ static int __accept_complete(lua_State *L, lio* io, lirp * irp)
 static int __send(lua_State *L, lio* io, lirp * irp)
 {
     lsockirp * sockirp = (lsockirp*)irp;
-    ssize_t sendbytes = send(irp->file->fd,sockirp->buff,sockirp->bufflen,sockirp->unknown.flags);
+    ssize_t sendbytes = send(irp->file->fd,sockirp->buff,sockirp->bufflen,sockirp->unknown.flags | MSG_NOSIGNAL);
     if(sendbytes == -1)
     {
         if (errno == EINPROGRESS || errno == EAGAIN)
@@ -210,7 +210,7 @@ static int __send_complete(lua_State *L, lio* io, lirp * irp)
 static int __recv(lua_State *L, lio* io, lirp * irp)
 {
     lsockirp * sockirp = (lsockirp*)irp;
-    ssize_t recvbytes = recv(irp->file->fd,sockirp->buff,sockirp->bufflen,sockirp->unknown.flags);
+    ssize_t recvbytes = recv(irp->file->fd,sockirp->buff,sockirp->bufflen,sockirp->unknown.flags |  MSG_NOSIGNAL);
     if(recvbytes == -1)
     {
         if (errno == EINPROGRESS || errno == EAGAIN)
@@ -266,7 +266,7 @@ static int __sendto(lua_State *L, lio* io, lirp * irp)
                                irp->file->fd,
                                sockirp->buff,
                                sockirp->bufflen,
-                               sockirp->unknown.flags,
+                               sockirp->unknown.flags ,
                                (struct sockaddr*)sockirp->addr,
                                sockirp->addrlen);
     if(sendbytes == -1)
