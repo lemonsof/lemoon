@@ -203,7 +203,7 @@ namespace lemoon{namespace unittest{
 	{
 	public:
 
-		console_runner(const char * name,int args, char ** argv)
+		console_runner(const char * name,int , char ** )
 			:_name(name)
 		{}
 

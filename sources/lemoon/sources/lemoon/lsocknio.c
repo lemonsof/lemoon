@@ -1,6 +1,8 @@
+#include <lemoon/lio.h>
+#ifndef WIN32
 #include <fcntl.h>
 #include <unistd.h>
-#include <lemoon/lio.h>
+
 #include <lemoon/lsock.h>
 
 struct lsockirp{
@@ -12,7 +14,6 @@ struct lsockirp{
    
     char                            addr[LEMOON_SOCKADDR_MAXLEN * 2];
     socklen_t                       addrlen;
-    size_t                          bytesOfTrans;
     size_t                          bufflen;
     char                            buff[1];
 };
@@ -169,7 +170,7 @@ static int __send(lua_State *L, lio* io, lirp * irp)
     }
     else
     {
-        sockirp->bytesOfTrans = sendbytes;
+        sockirp->self.bytesOfTrans = sendbytes;
     }
     
     return LEMOON_SUCCESS;
@@ -194,7 +195,7 @@ static int __send_complete(lua_State *L, lio* io, lirp * irp)
         else
         {
             lua_pushnil(L);
-            lua_pushinteger(L, ((lsockirp*)irp)->bytesOfTrans);
+            lua_pushinteger(L, irp->bytesOfTrans);
         }
         
         if(0 != lua_pcall(L, 2, 0, 0))
@@ -223,7 +224,7 @@ static int __recv(lua_State *L, lio* io, lirp * irp)
     }
     else
     {
-        sockirp->bytesOfTrans = recvbytes;
+        sockirp->self.bytesOfTrans = recvbytes;
     }
     
     return LEMOON_SUCCESS;
@@ -247,7 +248,7 @@ static int __recv_complete(lua_State *L, lio* io, lirp * irp)
     {
         lsockirp *sockirp = (lsockirp*)irp;
         lua_pushnil(L);
-        lua_pushlstring(L, sockirp->buff,sockirp->bytesOfTrans);
+        lua_pushlstring(L, sockirp->buff,irp->bytesOfTrans);
     }
     
     if(0 != lua_pcall(L, 2, 0, 0))
@@ -281,7 +282,7 @@ static int __sendto(lua_State *L, lio* io, lirp * irp)
     }
     else
     {
-        sockirp->bytesOfTrans = sendbytes;
+        sockirp->self.bytesOfTrans = sendbytes;
     }
     
     return LEMOON_SUCCESS;
@@ -306,7 +307,7 @@ static int __sendto_complete(lua_State *L, lio* io, lirp * irp)
         else
         {
             lua_pushnil(L);
-            lua_pushinteger(L, ((lsockirp*)irp)->bytesOfTrans);
+            lua_pushinteger(L, irp->bytesOfTrans);
         }
         
         if(0 != lua_pcall(L, 2, 0, 0))
@@ -340,7 +341,7 @@ static int __recvfrom(lua_State *L, lio* io, lirp * irp)
     }
     else
     {
-        sockirp->bytesOfTrans = recvbytes;
+        sockirp->self.bytesOfTrans = recvbytes;
     }
     
     return LEMOON_SUCCESS;
@@ -366,7 +367,7 @@ static int __recvfrom_complete(lua_State *L, lio* io, lirp * irp)
     {
         lsockirp *sockirp = (lsockirp*)irp;
         lua_pushnil(L);
-        lua_pushlstring(L, sockirp->buff,sockirp->bytesOfTrans);
+        lua_pushlstring(L, sockirp->buff,irp->bytesOfTrans);
         lemoon_pushsockaddr(L, (struct sockaddr*)sockirp->addr, sockirp->addrlen);
     }
     
@@ -442,10 +443,10 @@ LEMOON_API int lemoon_closesock(lua_State *L)
     return 0;
 }
 
-LEMOON_API void lemoon_newsock(lua_State *L, int index, int domain, int type, int protocol)
+LEMOON_API void lemoon_newsock(lua_State *L, int index,  int handle, int domain, int type, int protocol)
 {
     lio * io = luaL_checkudata(L, index, LEMOON_REG(LEMOON_IO));
-    int fd = __socknio(L,io, -1, domain, type, protocol);
+    int fd = __socknio(L,io, handle, domain, type, protocol);
     lsock * sock = (lsock*)lfile_new(L, io, sizeof(lsock), LEMOON_REG(LEMOON_SOCK), fd, socknio_funcs, lemoon_closesock);
     sock->af = domain;
     sock->type = type;
@@ -549,3 +550,4 @@ LEMOON_API int lemoon_recvfrom(lua_State *L, int index, int func, size_t len, in
     return __iocall(L, sock->io,(lirp*)irp);
 }
     
+#endif //WIN32

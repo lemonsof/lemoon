@@ -21,9 +21,6 @@
 #include <string.h>
 
 #ifndef WIN32
-#ifndef __USE_POSIX
-#define __USE_POSIX
-#endif //
 #include <arpa/inet.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -79,7 +76,7 @@ LEMOON_API void lemoon_pushsockaddr(lua_State *L, struct sockaddr * addr,size_t 
 LEMOON_API struct sockaddr* lemoonL_testsockaddr(lua_State *L, int index, size_t *len);
 LEMOON_API struct sockaddr* lemoon_tosockaddr(lua_State *L, int index,size_t *len);
 //socket APIs
-LEMOON_API void lemoon_newsock(lua_State *L, int index, int domain, int type, int protocol);
+LEMOON_API void lemoon_newsock(lua_State *L, int index, int fd, int domain, int type, int protocol);
 LEMOON_API int lemoon_closesock(lua_State *L);
 LEMOON_API int lemoon_bind(lua_State *L, int index, struct sockaddr * addr, size_t addrlen);
 LEMOON_API void lemoon_listen(lua_State *L, int index,int cnns);

@@ -11,15 +11,14 @@ server:bind("0.0.0.0","13512")
 
 server:listen()
 
-
 function make_echo(conn, times, timestamp)
 	conn:send(string.format("[%s,%d]",conn,times))
 	conn:recv (56 , function ( err, msg )
 		if err ~= nil  then
-			print(string.format("TCPClient Connection(%s) recv error :%s", conn, err))
+			--print(string.format("TCPClient Connection(%s) recv error :%s", conn, err))
 			conn:close()
 		elseif #msg == 0 then
-			print(string.format("TCPClient Connection(%s) remote close connection", conn))
+			--print(string.format("TCPClient Connection(%s) remote close connection", conn))
 			conn:close()
 		else
 			--print(string.format("TCPClient Connection(%s) recv echo msg :%s", conn, msg))
@@ -32,18 +31,17 @@ function make_echo(conn, times, timestamp)
 		end
 	end)	
 end
-
----for i = 0,256 do 
----	local client = io:sock(2,1)
----	client:connect("127.0.0.1","13512",function( err )
----		if err ~= nil then
----			print(string.format("tcp(%s) connect failed :%s",client,err))
----		else
----			print("connection created",client)
----			make_echo(client,1000000 , lemoon.now())
----		end
----	end)
----end
+--for i = 0,100 do 
+--	local client = io:sock(2,1)
+--	client:connect("127.0.0.1","13512",function( err )
+--		if err ~= nil then
+--			print(string.format("tcp(%s) connect failed :%s",client,err))
+--		else
+--			--print("connection created",client)
+--			make_echo(client,1000 , lemoon.now())
+--		end
+--	end)
+--end--
 
 
 function server_echo(conn)
@@ -67,7 +65,7 @@ function server_echo(conn)
 			end
 		end
 	end)	
-end
+end--
 
 
 function accept( err, conn, remote )
@@ -79,7 +77,6 @@ function accept( err, conn, remote )
 			conn:close()
 		end
 	end 
-
 	server:accept(accept)
 end
 

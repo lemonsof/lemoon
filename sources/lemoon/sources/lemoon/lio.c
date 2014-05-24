@@ -87,6 +87,7 @@ static int __lfile_tostring(lua_State *L)
 
 LEMOON_PRIVATE void lio_close(lua_State *L, lio *io)
 {
+    L;
     if(io->files)
     {
         //TODO: process completeQ, and close all the file
@@ -201,51 +202,88 @@ LEMOON_PRIVATE lfile* lfile_search(lio * io, int fd)
     return current;
 }
 
-
-
+#ifdef WIN32
 LEMOON_PRIVATE void lfile_close(lua_State *L, lfile * file)
 {
-    if(file->next)
+    if (file->next)
     {
         file->next->prev = file->prev;
     }
-    
-    if(file->prev)
+
+    if (file->prev)
     {
         *file->prev = file->next;
     }
-    
+
+    lirp * irp;
+
+    while (NULL != (irp = file->readQ))
+    {
+        lirp_remove(irp);
+
+        irp->complete(L, file->io, irp, "file closed");
+
+        lirp_close(L, irp);
+    }
+
+    while (NULL != (irp = file->writeQ))
+    {
+        lirp_remove(irp);
+
+        irp->complete(L, file->io, irp, "file closed");
+
+        lirp_close(L, irp);
+    }
+}
+
+#else
+LEMOON_PRIVATE void lfile_close(lua_State *L, lfile * file)
+{
+    if (file->next)
+    {
+        file->next->prev = file->prev;
+    }
+
+    if (file->prev)
+    {
+        *file->prev = file->next;
+    }
+
     //then cancel all the pending io
     lirp * irp = file->readQ;
-    
-    while(irp)
+
+    while (irp)
     {
         lirp * next = irp->next;
-        
+
         irp->canceled = 1;
-        
+
         irp->next = NULL;
-        
-        lio_newcomplete(file->io,irp);
-        
+
+        lio_newcomplete(file->io, irp);
+
         irp = next;
     }
-    
+
     irp = file->writeQ;
-    
-    while(irp)
+
+    while (irp)
     {
         lirp * next = irp->next;
-        
+
         irp->canceled = 1;
-        
+
         irp->next = NULL;
-        
-        lio_newcomplete(file->io,irp);
-        
+
+        lio_newcomplete(file->io, irp);
+
         irp = next;
     }
 }
+#endif // WIN32
+
+
+#ifndef WIN32
 
 LEMOON_PRIVATE void lio_newcomplete(lio *io, lirp * irp)
 {
@@ -271,11 +309,11 @@ LEMOON_PRIVATE void lio_dispatchcomplete(lua_State *L, lio *io)
     {
         io->completeQ = irp->next;
         
-        if(irp->next)
-        {
-            irp->next->prev = &io->completeQ;
-        }
-        
+        //if(irp->next)
+        //{
+        //    irp->next->prev = &io->completeQ;
+        //}
+        //
         errcode = irp->complete(L, io, irp);
         
         lirp_close(L,irp);
@@ -290,7 +328,76 @@ LEMOON_PRIVATE void lio_dispatchcomplete(lua_State *L, lio *io)
 }
 
 
+LEMOON_PRIVATE void lfile_process_rwQ(lua_State *L, lio *io, lirp * Q, int errcode)
+{
+    lirp * current = Q;
+
+    if (errcode != 0)
+    {
+        while (current)
+        {
+            lirp * next = current->next;
+
+            if (next)
+            {
+                next->prev = current->prev;
+            }
+
+            *current->prev = next;
+
+            lemoonL_pushsysmerror(L, errcode, "async io error");
+
+            current->errmsg = luaL_ref(L, LUA_REGISTRYINDEX);
+            current->next = NULL;
+            current->prev = NULL;
+            lio_newcomplete(io, current);
+
+            current = next;
+        }
+    }
+    else
+    {
+        while (current)
+        {
+            int ret = current->proc(L, io, current);
+
+            if (ret == LEMOON_EAGIN)
+            {
+                break;
+            }
+
+            lirp * next = current->next;
+
+            if (next)
+            {
+                next->prev = current->prev;
+            }
+
+            *current->prev = next;
+
+            if (ret == LEMOON_RUNTIME_ERROR)
+            {
+                current->errmsg = luaL_ref(L, LUA_REGISTRYINDEX);
+            }
+
+            current->next = NULL;
+            current->prev = NULL;
+
+            lio_newcomplete(io, current);
+
+            current = next;
+        }
+    }
+
+
+}
+
+#endif //!WIN32
+#ifndef WIN32
 LEMOON_PRIVATE void* lirp_newrite(lua_State *L, lfile * file, size_t len,lioproc proc, liocomplete complete, int callback)
+#else
+LEMOON_PRIVATE void* lirp_newrite(lua_State *L, lfile * file, size_t len, liocomplete complete, int callback)
+#endif //WIN32
 {
     assert(len >= sizeof(lirp));
     
@@ -302,10 +409,13 @@ LEMOON_PRIVATE void* lirp_newrite(lua_State *L, lfile * file, size_t len,lioproc
     }
     
     memset(irp, 0, len);
-    irp->errmsg = LUA_NOREF;
+ 
     irp->callback = callback;
     irp->complete = complete;
+#ifndef WIN32
     irp->proc = proc;
+    irp->errmsg = LUA_NOREF;
+#endif //!WIN32
     irp->file = file;
     irp->next = file->writeQ;
     irp->prev = &file->writeQ;
@@ -316,8 +426,11 @@ LEMOON_PRIVATE void* lirp_newrite(lua_State *L, lfile * file, size_t len,lioproc
     file->writeQ = irp;
     return irp;
 }
-
+#ifndef WIN32
 LEMOON_PRIVATE void* lirp_newread(lua_State *L, lfile * file, size_t len, lioproc proc,liocomplete complete, int callback)
+#else
+LEMOON_PRIVATE void* lirp_newread(lua_State *L, lfile * file, size_t len, liocomplete complete, int callback)
+#endif //WIN32
 {
     assert(len >= sizeof(lirp));
     
@@ -329,10 +442,13 @@ LEMOON_PRIVATE void* lirp_newread(lua_State *L, lfile * file, size_t len, liopro
     }
     
     memset(irp, 0, len);
-    irp->errmsg = LUA_NOREF;
+
     irp->callback = callback;
     irp->complete = complete;
+#ifndef WIN32
+    irp->errmsg = LUA_NOREF;
     irp->proc = proc;
+#endif //!WIN32
     irp->file = file;
     irp->next = file->readQ;
     irp->prev = &file->readQ;
@@ -345,84 +461,38 @@ LEMOON_PRIVATE void* lirp_newread(lua_State *L, lfile * file, size_t len, liopro
 
 }
 
+LEMOON_PRIVATE void lirp_remove(lirp * irp)
+{
+    if (irp->prev)
+    {
+        *irp->prev = irp->next;
+    }
+
+    if (irp->next)
+    {
+        irp->next->prev = irp->prev;
+    }
+}
+
 LEMOON_PRIVATE void lirp_close(lua_State*L ,lirp * irp)
 {
+    lirp_remove(irp);
+
     if(irp->callback != LUA_NOREF)
     {
         luaL_unref(L, LUA_REGISTRYINDEX, irp->callback);
         irp->callback = LUA_NOREF;
     }
-    
+#ifndef WIN32
     if(irp->errmsg != LUA_NOREF)
     {
         luaL_unref(L, LUA_REGISTRYINDEX, irp->errmsg);
         irp->errmsg = LUA_NOREF;
     }
-    
+#endif //!WIN32   
     free(irp);
 }
 
-
-
-LEMOON_PRIVATE void lfile_process_rwQ(lua_State *L, lio *io, lirp * Q, int errcode)
-{
-    lirp * current = Q;
- 
-    if(errcode != 0)
-    {
-        while(current)
-        {
-            lirp * next = current->next;
-            
-            if(next)
-            {
-                next->prev = current->prev;
-            }
-            
-            *current->prev = next;
-            
-            lemoonL_pushsysmerror(L, errcode, "async io error");
-            
-            current->errmsg = luaL_ref(L, LUA_REGISTRYINDEX);
-            
-            lio_newcomplete(io, current);
-            
-            current = next;
-        }
-    }
-    else
-    {
-        while(current)
-        {
-            int ret = current->proc(L, io, current);
-            
-            if(ret == LEMOON_EAGIN)
-            {
-                break;
-            }
-            
-            lirp * next = current->next;
-            
-            if(next)
-            {
-                next->prev = current->prev;
-            }
-            
-            *current->prev = next;
-            
-            if(ret == LEMOON_RUNTIME_ERROR)
-            {
-                current->errmsg = luaL_ref(L, LUA_REGISTRYINDEX);
-            }
-            
-            lio_newcomplete(io, current);
-            
-            current = next;
-        }
-    }
-    
-    
-}
 
 
 

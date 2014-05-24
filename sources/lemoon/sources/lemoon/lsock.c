@@ -4,7 +4,7 @@ LEMOON_PRIVATE int lsock_new(lua_State *L)
 {
     luaL_checkstack(L, 3, NULL);
     
-    lemoon_newsock(L, 1, luaL_checkinteger(L, 2), luaL_checkinteger(L, 3), luaL_optinteger(L, 4, 0));
+    lemoon_newsock(L, 1, -1, luaL_checkinteger(L, 2), luaL_checkinteger(L, 3), luaL_optinteger(L, 4, 0));
     
     return 1;
 }
