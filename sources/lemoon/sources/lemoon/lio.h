@@ -1,68 +1,66 @@
-/*!
- * \file lio.h
- * \date 2014/05/17 18:40
- *
- * \author yayan
- * Contact: user@company.com
- *
- * \brief 
- *
- * TODO: long description
- *
- * \note
-*/
-#ifndef LEMOON_LIO_H
-#define LEMOON_LIO_H
+//
+//  lreactor_io.h
+//  Lemoon
+//
+//  Created by yayanyang on 14-5-22.
+//
+//
+
+#ifndef Lemoon_lreactor_io_h
+#define Lemoon_lreactor_io_h
+
 #include <lemoon/lemoon.h>
+
+
 typedef struct lio lio;
 typedef struct lirp lirp;
 typedef struct lfile lfile;
+typedef struct lsockirp lsockirp;
 
-typedef void(*iocomplete)(lua_State *L, lirp * irp, size_t bytes,const char* errmsg);
+typedef int(*lioproc)(lua_State *L, lio* io, lirp * irp);
+typedef int(*liocomplete)(lua_State *L, lio* io, lirp * irp);
 
-typedef struct lirp{
-#ifdef WIN32
-    OVERLAPPED                      overlapped;
-#endif 
+struct lirp {
     lirp                            *next;
     lirp                            **prev;
-    iocomplete                      op;
-    int                             callback;
-    int                             handle;
-}                                   lirp;
+    lfile                           *file;
+    lioproc                         proc;
+    liocomplete                     complete;
+    int                             callback; //store in LUA_REGISTRYINDEX table
+    int                             errmsg;   //store in LUA_REGISTRYINDEX table
+    int                             canceled; //if this field is not zero, indicate the irp had been canceled.
+};
 
-typedef struct lirprw{
-    lirp                            irp;
-    size_t                          length;
-    char                            buff [1];
-}                                   lirprw;
-
-typedef struct lfile{
+struct lfile{
     lfile                           *next;
     lfile                           **prev;
-    int                             handle;
-    int                             io;
-    int                             counter;
-    lirp                            *writeQ;
     lirp                            *readQ;
-}                                   lfile;
+    lirp                            *writeQ;
+    lio                             *io;
+    int                             fd;
+};
 
-typedef struct lio{
+struct lio{
+    size_t                          nsize;
     size_t                          buckets;
-    size_t                          files;
-    lfile                           **array;
-}                                   lio;
+    lfile                           **files;
+    lirp                            *completeQ;
+};
 
-LEMOON_PRIVATE lio* lioB_new(lua_State *L,size_t len,const luaL_Reg * funcs,lua_CFunction closef);
-LEMOON_PRIVATE void lioB_close(lua_State *L, lio* io);
-LEMOON_PRIVATE lfile* lioB_newfile(lua_State *L,size_t len,int index, int fd,const char* tname,const luaL_Reg * funcs, lua_CFunction closef);
-LEMOON_PRIVATE void lioB_closefile(lua_State *L, lfile* file);
-LEMOON_PRIVATE lfile* lioB_searchfile(lio* io, int fd);
+LEMOON_PRIVATE lio* lio_new(lua_State *L,size_t len,const luaL_Reg * funcs,lua_CFunction closef);
+LEMOON_PRIVATE void lio_close(lua_State *L, lio *io);
+LEMOON_PRIVATE void lio_newcomplete(lio *io, lirp * irp);
+LEMOON_PRIVATE void lio_dispatchcomplete(lua_State *L, lio *io);
 
-LEMOON_PRIVATE lirp* lioB_newread(lua_State *L, size_t len,lfile *file, iocomplete cp);
-LEMOON_PRIVATE lirp* lioB_newwrite(lua_State *L, size_t len, lfile *file, iocomplete cp);
-LEMOON_PRIVATE void lioB_closeirp(lua_State *L, lirp * irp);
+LEMOON_PRIVATE lfile* lfile_new(lua_State *L, lio * io, size_t len, const char * tname, int fd, const luaL_Reg * funcs, lua_CFunction closef);
+LEMOON_PRIVATE void lfile_close(lua_State *L, lfile * file);
+LEMOON_PRIVATE lfile* lfile_search(lio * io, int fd);
+LEMOON_PRIVATE int lfile_register(lua_State *L,lio * io, int fd);
+LEMOON_PRIVATE void lfile_process_rwQ(lua_State *L, lio *io, lirp * Q, int errcode);
 
-LEMOON_PRIVATE void write_complete(lua_State *L, lirp * irp, size_t bytes, const char* errmsg);
-LEMOON_PRIVATE void read_complete(lua_State *L, lirprw * irp, size_t bytes, const char* errmsg);
-#endif // LEMOON_LIO_H
+LEMOON_PRIVATE void* lirp_newread(lua_State *L, lfile * file, size_t len, lioproc proc,liocomplete complete, int callback);
+LEMOON_PRIVATE void* lirp_newrite(lua_State *L, lfile * file, size_t len,lioproc proc, liocomplete complete, int callback);
+LEMOON_PRIVATE void lirp_close(lua_State*L ,lirp * irp);
+
+
+#endif

@@ -204,7 +204,7 @@ namespace lemoon{namespace unittest{
 	public:
 
 		console_runner(const char * name,int args, char ** argv)
-			:_args(args),_argv(argv),_name(name)
+			:_name(name)
 		{}
 
 		int run()
@@ -295,15 +295,15 @@ namespace lemoon{namespace unittest{
 	
 	private:
 
-		int					_args;
+		//int					_args;
 
-		char				**_argv;
+		//char				**_argv;
 
 		std::string			_name;
 
 		std::string			_url;
 
-		size_t				_times;
+		//size_t				_times;
 	};
 }}
 
