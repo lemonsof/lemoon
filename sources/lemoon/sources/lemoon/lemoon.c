@@ -200,3 +200,20 @@ LEMOON_API void lemoon_pushsysmerror(lua_State *L, int errcode, const char * fil
 
     
 }
+
+LEMOON_API int lemoonL_dostring(lua_State *L, const char * fmt, ...)
+{
+    va_list argp;
+    va_start(argp, fmt);
+    const char * msg = lua_pushvfstring(L, fmt, argp);
+    va_end(argp);
+    if (luaL_dostring(L, msg))
+    {
+        //lua_remove(L, -2);
+        return LEMOON_RUNTIME_ERROR;
+    }
+
+    lua_pop(L, 1);
+
+    return LEMOON_SUCCESS;
+}

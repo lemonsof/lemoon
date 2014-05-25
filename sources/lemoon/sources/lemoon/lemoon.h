@@ -99,6 +99,8 @@ LEMOON_API void lemoon_pusherror(lua_State *L, const char * file, int lines, con
 LEMOON_API void lemoon_pushsysmerror(lua_State *L,int errcode, const char * file, int lines, const char* msg,...);
 LEMOON_API int lemoon_sysmerror(lua_State *L, int errcode, const char * file, int lines, const char* msg, ...);
 
+//utils APIs
+LEMOON_API int lemoonL_dostring(lua_State *L,const char * fmt, ...);
 
 
 #define lemoonL_error(L,msg,...) lemoon_error((L),__FILE__,__LINE__,(msg),##__VA_ARGS__)

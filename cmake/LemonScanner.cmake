@@ -46,8 +46,8 @@ function(lemon_scan_package_files PATH)
 	lemon_scan_files(LEMON_PACKAGE_UNITTEST_C_CXX_HEADER_FILES "Include Files" ${PATH}/unittest PATTERNS *.h *.hpp *.hxx)
 	lemon_scan_files(LEMON_PACKAGE_UNITTEST_C_CXX_SOURCE_FILES "Source Files" ${PATH}/unittest PATTERNS *.c *.cpp *.cc *.cxx)
 
-	lemon_scan_files(LEMON_PACKAGE_EXE_HEADER_FILES "Include Files" ${PATH}/execute PATTERNS *.h *.hpp *.hxx)
-	lemon_scan_files(LEMON_PACKAGE_EXE_SOURCE_FILES "Source Files" ${PATH}/execute PATTERNS *.c *.cpp *.cc *.cxx)
+	lemon_scan_files(LEMON_PACKAGE_EXE_HEADER_FILES "Include Files" ${PATH}/exec PATTERNS *.h *.hpp *.hxx)
+	lemon_scan_files(LEMON_PACKAGE_EXE_SOURCE_FILES "Source Files" ${PATH}/exec PATTERNS *.c *.cpp *.cc *.cxx)
 
 	set(LEMON_PACKAGE_UNITTEST_C_CXX_FILES ${LEMON_PACKAGE_UNITTEST_C_CXX_HEADER_FILES} ${LEMON_PACKAGE_UNITTEST_C_CXX_SOURCE_FILES} PARENT_SCOPE)
 
