@@ -87,10 +87,9 @@ static int __lfile_tostring(lua_State *L)
 
 LEMOON_PRIVATE void lio_close(lua_State *L, lio *io)
 {
-    L;
+    (void)L;
     if(io->files)
     {
-        //TODO: process completeQ, and close all the file
         free(io->files);
     }
     
@@ -307,13 +306,8 @@ LEMOON_PRIVATE void lio_dispatchcomplete(lua_State *L, lio *io)
     
     while(irp)
     {
-        io->completeQ = irp->next;
+        lirp_remove(irp);
         
-        //if(irp->next)
-        //{
-        //    irp->next->prev = &io->completeQ;
-        //}
-        //
         errcode = irp->complete(L, io, irp);
         
         lirp_close(L,irp);
@@ -338,20 +332,12 @@ LEMOON_PRIVATE void lfile_process_rwQ(lua_State *L, lio *io, lirp * Q, int errco
         {
             lirp * next = current->next;
 
-            if (next)
-            {
-                next->prev = current->prev;
-            }
-
-            *current->prev = next;
+            lirp_remove(current);
 
             lemoonL_pushsysmerror(L, errcode, "async io error");
 
             current->errmsg = luaL_ref(L, LUA_REGISTRYINDEX);
-            current->next = NULL;
-            current->prev = NULL;
             lio_newcomplete(io, current);
-
             current = next;
         }
     }
@@ -367,21 +353,13 @@ LEMOON_PRIVATE void lfile_process_rwQ(lua_State *L, lio *io, lirp * Q, int errco
             }
 
             lirp * next = current->next;
-
-            if (next)
-            {
-                next->prev = current->prev;
-            }
-
-            *current->prev = next;
+            
+            lirp_remove(current);
 
             if (ret == LEMOON_RUNTIME_ERROR)
             {
                 current->errmsg = luaL_ref(L, LUA_REGISTRYINDEX);
             }
-
-            current->next = NULL;
-            current->prev = NULL;
 
             lio_newcomplete(io, current);
 
@@ -472,6 +450,9 @@ LEMOON_PRIVATE void lirp_remove(lirp * irp)
     {
         irp->next->prev = irp->prev;
     }
+    
+    irp->prev = NULL;
+    irp->next = NULL;
 }
 
 LEMOON_PRIVATE void lirp_close(lua_State*L ,lirp * irp)

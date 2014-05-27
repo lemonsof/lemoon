@@ -17,6 +17,15 @@ namespace lemoon{namespace luabind {
     class state :private nocopyable
     {
     public:
+        state(lua_Alloc alloc , void * ud) :_L(lua_newstate(alloc,ud))
+        {
+            if (_L == nullptr)
+            {
+                throw std::runtime_error("can't open lua virtual machine.");
+            }
+            
+            luaL_openlibs(_L);
+        }
         state() :_L(luaL_newstate())
         {
             if (_L == nullptr)

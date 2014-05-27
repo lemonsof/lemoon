@@ -31,17 +31,28 @@ function make_echo(conn, times, timestamp)
 		end
 	end)	
 end
---for i = 0,100 do 
---	local client = io:sock(2,1)
---	client:connect("127.0.0.1","13512",function( err )
---		if err ~= nil then
---			print(string.format("tcp(%s) connect failed :%s",client,err))
---		else
---			--print("connection created",client)
---			make_echo(client,1000 , lemoon.now())
---		end
---	end)
---end--
+
+--for i = 0,100 do --
+
+--	local client = io:sock(2,1)--
+
+--	client:connect("127.0.0.1","13512",function( err )--
+
+--		if err ~= nil then--
+
+--			print(string.format("tcp(%s) connect failed :%s",client,err))--
+
+--		else--
+
+--			--print("connection created",client)--
+
+--			make_echo(client,10000 , lemoon.now())--
+
+--		end--
+
+--	end)--
+
+--end
 
 
 function server_echo(conn)
@@ -57,10 +68,11 @@ function server_echo(conn)
 			--print(string.format("TCPServer Connection(%s) recv msg :%s", conn, msg))
 			if pcall(conn.send,conn,"+PONG\r\n") then
 				if not pcall(server_echo,conn) then
+					print("send failed")
 					conn:close()
 				end
 			else
-				--print("send failed")
+				print("send failed")
 				conn:close()
 			end
 		end
@@ -74,6 +86,7 @@ function accept( err, conn, remote )
 	else 
 		--print(string.format("accept connect(%s) from:%s ", conn, remote))
 		if not pcall(server_echo,conn) then
+			--print("server recv exception")
 			conn:close()
 		end
 	end 

@@ -29,3 +29,9 @@ endif(WIN32)
 
 CHECK_INCLUDE_FILES (sys/event.h LEMOON_KQUEUE_H)
 CHECK_INCLUDE_FILES (sys/epoll.h LEMOON_HAS_EPOLL_H)
+
+#find_package(Jemalloc)
+
+#IF(Jemalloc_INCLUDE_DIR)
+#	SET(LEMOON_HAS_JEMALLOC_H TRUE)
+#ENDIF()

@@ -5,6 +5,10 @@
 
 #include <lemoon/lsock.h>
 
+#ifdef __MACH__
+#define MSG_NOSIGNAL 0
+#endif
+
 struct lsockirp{
     lirp                            self;
     union{
@@ -97,6 +101,7 @@ static int __socknio(lua_State *L, lio * io, int fd, int domain, int type, int p
 
 static int __accept(lua_State *L, lio* io, lirp * irp)
 {
+    ;
     lsockirp * sockirp = (lsockirp*)irp;
     int conn = accept(irp->file->fd, (struct sockaddr*)sockirp->addr, &sockirp->addrlen);
     if(conn == -1)
@@ -157,7 +162,9 @@ static int __accept_complete(lua_State *L, lio* io, lirp * irp)
 static int __send(lua_State *L, lio* io, lirp * irp)
 {
     lsockirp * sockirp = (lsockirp*)irp;
+
     ssize_t sendbytes = send(irp->file->fd,sockirp->buff,sockirp->bufflen,sockirp->unknown.flags | MSG_NOSIGNAL);
+    
     if(sendbytes == -1)
     {
         if (errno == EINPROGRESS || errno == EAGAIN)
@@ -211,7 +218,7 @@ static int __send_complete(lua_State *L, lio* io, lirp * irp)
 static int __recv(lua_State *L, lio* io, lirp * irp)
 {
     lsockirp * sockirp = (lsockirp*)irp;
-    ssize_t recvbytes = recv(irp->file->fd,sockirp->buff,sockirp->bufflen,sockirp->unknown.flags |  MSG_NOSIGNAL);
+    ssize_t recvbytes = recv(irp->file->fd,sockirp->buff,sockirp->bufflen,sockirp->unknown.flags | MSG_NOSIGNAL);
     if(recvbytes == -1)
     {
         if (errno == EINPROGRESS || errno == EAGAIN)

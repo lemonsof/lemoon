@@ -217,3 +217,43 @@ LEMOON_API int lemoonL_dostring(lua_State *L, const char * fmt, ...)
 
     return LEMOON_SUCCESS;
 }
+
+
+#ifdef LEMOON_HAS_JEMALLOC_H
+#include <jemalloc/jemalloc.h>
+LEMOON_API void * lemoon_alloc (void *ud, void *ptr, size_t osize, size_t nsize)
+{
+    if(nsize == 0)
+    {
+        je_free(ptr);
+        return NULL;
+    }
+    return je_realloc(ptr, nsize);
+}
+#endif
+
+LEMOON_API void * lemoon_newclass(lua_State *L, const char * name, size_t classize, const luaL_Reg * funcs,lua_CFunction closef)
+{
+    void *obj = lua_newuserdata(L, classize);
+    
+    memset(obj, 0, classize);
+    
+    if(luaL_newmetatable(L, name))
+    {
+        lua_newtable(L);
+        
+        luaL_setfuncs(L,funcs,0);
+        
+        lua_setfield(L, -2, "__index");
+        
+        lua_pushcfunction(L, closef);
+        
+        lua_setfield(L, -2, "__gc");
+    }
+    
+    lua_setmetatable(L, -2);
+    
+    return obj;
+    
+}
+
