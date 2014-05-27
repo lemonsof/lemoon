@@ -2,21 +2,14 @@
 
 static const struct luaL_Reg lnode_funcs[] =
 {
-    {"node",lnode_search},
+    {"start",lnode_newnode},
     {NULL,NULL}
 };
 
-static int lnode_close(lua_State *L)
+static int luaopen_lnode(lua_State *L)
 {
-    lnode * node = luaL_checkudata(L, 1, "lnode");
-    
-    if(node->closef)
-    {
-        node->closef(node);
-        node->closef = NULL;
-    }
-
-    return 0;
+    luaL_newlib(L, lnode_funcs);
+    return 1;
 }
 
 
@@ -27,6 +20,8 @@ static int lnode_pmain(lua_State *L)
     
     luaL_openlibs(L); //load builtin libs
     
+    luaL_requiref(L, "lnode", luaopen_lnode, 1);
+    
     if(LEMOON_RUNTIME_ERROR == lemoonL_dostring(L, "package.path = package.path ..';%s'",LEMOON_SOURCE_ROOT "/share/runtime/?.lua"))
     {
         lemoonL_error(L, "set addition load path failed :%s",lua_tostring(L, -1));
@@ -34,35 +29,34 @@ static int lnode_pmain(lua_State *L)
     
     lua_getglobal(L, "require");
     
-    lua_pushstring(L, argv[1]);
+    lua_pushstring(L, "lnode.bootloader");
     
     if(0 != lua_pcall(L, 1, 1, 0))
     {
-        lemoonL_error(L, "can't load module[%s] : %s", argv[1], lua_tostring(L, -1));
+        lemoonL_error(L, "can't load module[lnode.bootloader] : %s", lua_tostring(L, -1));
     }
+
     
     if(lua_type(L, -1) != LUA_TTABLE)
     {
-        lemoonL_error(L, "can't load module[%s] : return value is not a table", argv[1]);
+        lemoonL_error(L, "can't load module[lnode.bootloader] : return value is not a table", argv[1]);
     }
     
     lua_getfield(L, -1, "onload");
 
     if(lua_type(L, -1) != LUA_TFUNCTION)
     {
-        lemoonL_error(L, "can't load module[%s] : not found onload function", argv[1]);
+        lemoonL_error(L, "can't load module[lnode.bootloader] : not found onload function");
     }
     
-    lemoon_newclass(L, "lnode", sizeof(lnode), lnode_funcs, lnode_close);
-    
-    for (int i = 2; i < args; ++ i)
+    for (int i = 1; i < args; ++ i)
     {
         lua_pushstring(L, argv[i]);
     }
     
     if( 0!= lua_pcall(L, args - 1, 0, 0))
     {
-        lemoonL_error(L, "can't load module[%s]'s onload function :%s", argv[1], lua_tostring(L, -1));
+        lemoonL_error(L, "can't load module[lnode.bootloader]'s onload function :%s", lua_tostring(L, -1));
     }
     
     return 0;
@@ -95,7 +89,7 @@ int lnode_main(int args, char ** argv)
     return status;
 }
 
-int lnode_search(lua_State *L)
+int lnode_newnode(lua_State *L)
 {
     return 0;
 }
