@@ -3,7 +3,7 @@ local handle = {}
 local OK = "HTTP/1.0 Status: 200 OK\r\nContent-Type: text/plain\r\n\r\nHello world"
 
 function handle.onload( node , conn, remote)
-	print(string.format("remote connect[%s] from %s",conn, remote))
+	--print(string.format("remote connect[%s] from %s",conn, remote))
 	
 	local status, header = node:recv(conn,128)
 
@@ -20,11 +20,11 @@ function handle.onload( node , conn, remote)
 		end
 	end
 
-	print("send ...",conn);
+	--print("send ...",conn);
 
 	node:send(conn,OK)
 
-	print("send OK",conn);
+	--print("send OK",conn);
 
 	conn:close()
 end

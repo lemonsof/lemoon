@@ -101,7 +101,6 @@ static int __socknio(lua_State *L, lio * io, int fd, int domain, int type, int p
 
 static int __accept(lua_State *L, lio* io, lirp * irp)
 {
-    printf("accept ...\n");
     lsockirp * sockirp = (lsockirp*)irp;
     int conn = accept(irp->file->fd, (struct sockaddr*)sockirp->addr, &sockirp->addrlen);
     if(conn == -1)
@@ -116,7 +115,6 @@ static int __accept(lua_State *L, lio* io, lirp * irp)
     }
     else
     {
-        printf("accept connect :%d",ntohs(((struct sockaddr_in*)sockirp->addr)->sin_port));
         __socknio(L, irp->file->io,conn, 0, 0, 0);
         sockirp->unknown.remote = conn;
     }
@@ -149,7 +147,6 @@ static int __accept_complete(lua_State *L, lio* io, lirp * irp)
         lua_pushnil(L);
         lfile_new(L, io, sizeof(lsock), LEMOON_REG(LEMOON_SOCK), sockirp->unknown.remote, socknio_funcs, lemoon_closesock);
         lemoon_pushsockaddr(L, (struct sockaddr*)sockirp->addr, sockirp->addrlen);
-        printf("accept complete :%d",ntohs(((struct sockaddr_in*)sockirp->addr)->sin_port));
     }
     
     if(0 != lua_pcall(L, 3, 0, 0))
