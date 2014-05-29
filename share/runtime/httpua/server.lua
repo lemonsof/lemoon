@@ -13,8 +13,6 @@ function httpua.onload( node , host, port)
 			node.loadservice("httpua.server.handle", conn, remote)
 		end 
 	end
-
-	
 end
 
 return httpua

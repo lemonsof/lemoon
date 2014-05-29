@@ -16,7 +16,7 @@ LEMOON_API void lemoon_dispatch(lua_State *L,int index,size_t timeout)
 
     lirp * irp = NULL;
 
-    if (GetQueuedCompletionStatus(io->handle, &bytes, &completionKey, (LPOVERLAPPED*) &irp, timeout))
+    if (GetQueuedCompletionStatus(io->handle, &bytes, &completionKey, (LPOVERLAPPED*) &irp, (DWORD)timeout))
     {
         irp->bytesOfTrans = bytes;
 
@@ -31,7 +31,7 @@ LEMOON_API void lemoon_dispatch(lua_State *L,int index,size_t timeout)
             lemoonL_error(L, "%s", lua_tostring(L, -1));
         }
 
-        return 0;
+        return;
     }
 
     DWORD lasterror = GetLastError();
@@ -40,7 +40,7 @@ LEMOON_API void lemoon_dispatch(lua_State *L,int index,size_t timeout)
     {
         if (irp == NULL){
             if (lasterror != WAIT_TIMEOUT){
-                return lemoonL_sysmerror(L, GetLastError(), "GetQueuedCompletionStatus exception");
+                lemoonL_sysmerror(L, GetLastError(), "GetQueuedCompletionStatus exception");
             }
         }
         else {
@@ -57,8 +57,6 @@ LEMOON_API void lemoon_dispatch(lua_State *L,int index,size_t timeout)
             }
         }
     }
-
-    return 0;
 }
 
 static int __iocp_close(lua_State *L)
@@ -73,7 +71,7 @@ static int __iocp_close(lua_State *L)
 const static luaL_Reg __iocp_funcs [] =
 {
     { "sock", lsock_new },
-    { "dispatch", __iocp_dispatch },
+    { "dispatch", lio_dispatch },
     { NULL, NULL }
 };
 

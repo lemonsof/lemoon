@@ -7,11 +7,9 @@ typedef struct lepoll{
     int                     handle;
 }lepoll;
 
-LEMOON_API void lemoon_dispatch(lua_State *L,int index,size_t timeout)
+LEMOON_PRIVATE int lio_niodispatch(lua_State *L, lio*base, int timeout)
 {
-    luaL_checkstack(L, 2, NULL);
-    
-    lepoll *io = luaL_checkudata(L, index, LEMOON_REG(LEMOON_IO));
+    lepoll *io = (lepoll*)base;
    
     struct epoll_event events[1];
     
@@ -52,8 +50,6 @@ LEMOON_API void lemoon_dispatch(lua_State *L,int index,size_t timeout)
             }    
         }
     }
-    
-    lio_dispatchcomplete(L, (lio*)io);
 }
 
 static int __epoll_close(lua_State *L)

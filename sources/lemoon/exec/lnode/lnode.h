@@ -18,6 +18,8 @@
 
 #define LNODE_NAME_MAXLEN   56
 
+typedef struct lnode lnode;
+
 
 int lnode_main(int args, char ** argv);
 

@@ -10,9 +10,10 @@ typedef struct lkqueue{
     int                     handle;
 }lkqueue;
 
-LEMOON_API void lemoon_dispatch(lua_State *L,int index,size_t timeout)
+LEMOON_PRIVATE int lio_niodispatch(lua_State *L, lio*base, int timeout)
 {
-    lkqueue *io = luaL_checkudata(L, index, LEMOON_REG(LEMOON_IO));
+    //lkqueue *io = luaL_checkudata(L, index, LEMOON_REG(LEMOON_IO));
+    lkqueue *io = (lkqueue*)base;
     
     struct kevent events[1];
     
@@ -45,8 +46,6 @@ LEMOON_API void lemoon_dispatch(lua_State *L,int index,size_t timeout)
     {
         lemoonL_sysmerror(L, errno, "process kevent exception");
     }
-    
-    lio_dispatchcomplete(L, (lio*)io);
 }
 
 static int __kq_close(lua_State *L)

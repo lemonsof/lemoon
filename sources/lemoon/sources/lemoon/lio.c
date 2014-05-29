@@ -296,6 +296,15 @@ LEMOON_PRIVATE int lio_dispatch(lua_State *L)
 
 #ifndef WIN32
 
+LEMOON_API void lemoon_dispatch(lua_State *L,int index,size_t timeout)
+{
+    lio *io = luaL_checkudata(L,index,LEMOON_REG(LEMOON_IO));
+    
+    lio_dispatchcomplete(L,io);
+
+    lio_niodispatch(L,io,timeout);
+}
+
 LEMOON_PRIVATE void lio_newcomplete(lio *io, lirp * irp)
 {
     irp->next = io->completeQ;

@@ -2,7 +2,7 @@
 
 static const struct luaL_Reg lnode_funcs[] =
 {
-    {"start",lnode_newnode},
+    {"node",lnode_newnode},
     {NULL,NULL}
 };
 
@@ -18,7 +18,7 @@ static int lnode_pmain(lua_State *L)
     int args = luaL_checkinteger(L, 1);
     char ** argv = lua_touserdata(L, 2);
     
-    luaL_openlibs(L); //load builtin libs
+    luaL_openlibs(L);
     
     luaL_requiref(L, "lnode", luaopen_lnode, 1);
     
@@ -87,9 +87,4 @@ int lnode_main(int args, char ** argv)
     lua_close(L);
     
     return status;
-}
-
-int lnode_newnode(lua_State *L)
-{
-    return 0;
 }

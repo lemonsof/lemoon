@@ -1,6 +1,7 @@
 
 local datetime = require "lemoon.datetime"
 local lemoon = require "lemoon"
+local po = require "lemoon.po"
 
 local bootloader = 
 {
@@ -8,12 +9,12 @@ local bootloader =
 	timestamp = lemoon.now();
 	io = lemoon.io();
 	net = require "lnode.net";
-	running = {}
+	runQ = {}
 }
 
 function bootloader.wakeup( coro, ... )
-	if not bootloader.running[coro] then
-		bootloader.running[coro] = table.pack(...)
+	if not bootloader.runQ[coro] then
+		bootloader.runQ[coro] = table.pack(...)
 	end
 end
 
@@ -31,13 +32,13 @@ function bootloader.dispatch(  )
 		bootloader.timestamp = newtimestamp
 	end
 
-	for coro , context in pairs(bootloader.running) do
+	for coro , context in pairs(bootloader.runQ) do
 		if context then 
 			local status , msg = coroutine.resume(coro,table.unpack(context))
 			if not status then
 				print(string.format("load %s failed :%s", coro, msg))
 			end
-			bootloader.running[coro] = nil
+			bootloader.runQ[coro] = nil
 		end
 	end
 
@@ -45,6 +46,7 @@ function bootloader.dispatch(  )
 end
 
 function bootloader.loadservice( servicename, ... )
+
 	local service = require(servicename)
 	if not service then
 		print(string.format("load service(%s) failed : not found",servicename))
@@ -58,7 +60,7 @@ function bootloader.loadservice( servicename, ... )
 	end
 end
 
-function bootloader.onload( nodename, mainservice, ...)
+function bootloader.onload(nodename,  mainservice, ...)
 	bootloader.name = nodename
 
 	bootloader.timer = lemoon.timer(bootloader.timer_accuracy)
