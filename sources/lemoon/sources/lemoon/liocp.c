@@ -6,23 +6,15 @@ typedef struct liocp{
     HANDLE                  handle;
 }liocp;
 
-static int __kq_dispatch(lua_State *L)
+LEMOON_API void lemoon_dispatch(lua_State *L,int index,size_t timeout)
 {
-    luaL_checkstack(L, 2, NULL);
-
-    liocp *io = luaL_checkudata(L, 1, LEMOON_REG(LEMOON_IO));
-
-    int timeout = 0;
+    liocp *io = luaL_checkudata(L, index, LEMOON_REG(LEMOON_IO));
 
     DWORD bytes;
 
     ULONG_PTR completionKey;
 
     lirp * irp = NULL;
-
-    if (lua_isnumber(L, 2)){
-        timeout = luaL_checkinteger(L, 2);
-    }
 
     if (GetQueuedCompletionStatus(io->handle, &bytes, &completionKey, (LPOVERLAPPED*) &irp, timeout))
     {
@@ -81,7 +73,7 @@ static int __iocp_close(lua_State *L)
 const static luaL_Reg __iocp_funcs [] =
 {
     { "sock", lsock_new },
-    { "dispatch", __kq_dispatch },
+    { "dispatch", __iocp_dispatch },
     { NULL, NULL }
 };
 

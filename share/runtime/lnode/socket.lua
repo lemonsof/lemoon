@@ -15,9 +15,36 @@ function socket.listen( node, socket)
 end
 
 function socket.accept( node, socket)
-	socket:accept()
+
+	local coro = coroutine.running()
+
+
+	socket:accept(function ( err, cnn, remote)
+		node.wakeup(coro, err, cnn, remote)
+	end)
+
+	return coroutine.yield()
 end
 
+function socket.recv( node, socket, len)
+	local coro = coroutine.running()
+
+	socket:recv(len ,function ( err, data )
+		node.wakeup( coro, err, data )
+	end)
+
+	return coroutine.yield()
+end
+
+function socket.send( node, socket, msg)
+	local coro = coroutine.running()
+
+	socket:send(msg ,function ( err )
+		node.wakeup( coro, err )
+	end)
+
+	return coroutine.yield()
+end
 
 
 return socket

@@ -7,13 +7,11 @@ typedef struct lepoll{
     int                     handle;
 }lepoll;
 
-static int __epoll_dispatch(lua_State *L)
+LEMOON_API void lemoon_dispatch(lua_State *L,int index,size_t timeout)
 {
     luaL_checkstack(L, 2, NULL);
     
-    lepoll *io = luaL_checkudata(L, 1, LEMOON_REG(LEMOON_IO));
-    
-    int timeout = luaL_checkinteger(L,2);
+    lepoll *io = luaL_checkudata(L, index, LEMOON_REG(LEMOON_IO));
    
     struct epoll_event events[1];
     
@@ -38,7 +36,7 @@ static int __epoll_dispatch(lua_State *L)
                     lfile_process_rwQ(L,(lio*)io, file->readQ,errno);
                     lfile_process_rwQ(L,(lio*)io, file->writeQ,errno);
                     lio_dispatchcomplete(L, (lio*)io);
-                    return 0;
+                    return;
                 }
             
             }
@@ -53,11 +51,9 @@ static int __epoll_dispatch(lua_State *L)
                lfile_process_rwQ(L,(lio*)io, file->writeQ,0);
             }    
         }
-        
-        lio_dispatchcomplete(L, (lio*)io);
     }
     
-    return 0;
+    lio_dispatchcomplete(L, (lio*)io);
 }
 
 static int __epoll_close(lua_State *L)
@@ -72,7 +68,7 @@ static int __epoll_close(lua_State *L)
 const static luaL_Reg __epoll_funcs[] =
 {
     {"sock",lsock_new},
-    {"dispatch",__epoll_dispatch},
+    {"dispatch",lio_dispatch},
     {NULL,NULL}
 };
 

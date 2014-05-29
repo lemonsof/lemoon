@@ -282,6 +282,18 @@ LEMOON_PRIVATE void lfile_close(lua_State *L, lfile * file)
 #endif // WIN32
 
 
+LEMOON_PRIVATE int lio_dispatch(lua_State *L)
+{
+    luaL_checkstack(L, 2, NULL);
+    
+    int timeout = luaL_optinteger(L, 2, 0);
+    
+    lemoon_dispatch(L, 1, timeout);
+    
+    return 0;
+}
+
+
 #ifndef WIN32
 
 LEMOON_PRIVATE void lio_newcomplete(lio *io, lirp * irp)
@@ -366,8 +378,6 @@ LEMOON_PRIVATE void lfile_process_rwQ(lua_State *L, lio *io, lirp * Q, int errco
             current = next;
         }
     }
-
-
 }
 
 #endif //!WIN32

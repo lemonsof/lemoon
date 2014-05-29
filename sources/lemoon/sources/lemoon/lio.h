@@ -60,6 +60,7 @@ struct lio{
 
 LEMOON_PRIVATE lio* lio_new(lua_State *L,size_t len,const luaL_Reg * funcs,lua_CFunction closef);
 LEMOON_PRIVATE void lio_close(lua_State *L, lio *io);
+LEMOON_PRIVATE int lio_dispatch(lua_State *L);
 #ifndef WIN32
 LEMOON_PRIVATE void lio_newcomplete(lio *io, lirp * irp);
 LEMOON_PRIVATE void lio_dispatchcomplete(lua_State *L, lio *io);

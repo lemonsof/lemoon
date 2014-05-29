@@ -10,13 +10,9 @@ typedef struct lkqueue{
     int                     handle;
 }lkqueue;
 
-static int __kq_dispatch(lua_State *L)
+LEMOON_API void lemoon_dispatch(lua_State *L,int index,size_t timeout)
 {
-    luaL_checkstack(L, 2, NULL);
-    
-    lkqueue *io = luaL_checkudata(L, 1, LEMOON_REG(LEMOON_IO));
-    
-    int timeout = luaL_checkinteger(L,2);
+    lkqueue *io = luaL_checkudata(L, index, LEMOON_REG(LEMOON_IO));
     
     struct kevent events[1];
     
@@ -32,8 +28,7 @@ static int __kq_dispatch(lua_State *L)
         lfile * file = lfile_search((lio*)io, fd);
         if(!file)
         {
-            printf("not found register file(%d)",fd);
-            return 0;
+            return;
         }
         
         if(filter & EVFILT_READ)
@@ -45,15 +40,13 @@ static int __kq_dispatch(lua_State *L)
         {
             lfile_process_rwQ(L,(lio*)io, file->writeQ,errcode);
         }
-        
-        lio_dispatchcomplete(L, (lio*)io);
     }
     else if(ret == -1)
     {
         lemoonL_sysmerror(L, errno, "process kevent exception");
     }
     
-    return 0;
+    lio_dispatchcomplete(L, (lio*)io);
 }
 
 static int __kq_close(lua_State *L)
@@ -68,7 +61,7 @@ static int __kq_close(lua_State *L)
 const static luaL_Reg __kq_funcs[] =
 {
     {"sock",lsock_new},
-    {"dispatch",__kq_dispatch},
+    {"dispatch",lio_dispatch},
     {NULL,NULL}
 };
 
