@@ -10,7 +10,7 @@ function httpua.onload( node , host, port)
 		local err, conn, remote = node:accept(httpua.socket)
 
 		if not err then
-			node.loadservice("httpua.handle", conn, remote)
+			node.loadservice("httpua.server.handle", conn, remote)
 		end 
 	end
 

@@ -21,12 +21,10 @@
 #include <string.h>
 
 #ifndef WIN32
-#include <arpa/inet.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
-
-
+#include <arpa/inet.h>
 #endif //WIN32
 
 #ifdef __cplusplus

@@ -24,7 +24,7 @@ if(WIN32)
 		set(_WIN32_IE 0x0700)
 	endif()
 else()
-	 add_definitions(-D_BSD_SOURCE)
+	 add_definitions(-D_POSIX_SOURCE)
 endif(WIN32)
 
 CHECK_INCLUDE_FILES (sys/event.h LEMOON_KQUEUE_H)
