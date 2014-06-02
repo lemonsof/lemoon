@@ -33,7 +33,7 @@ static int lnode_pmain(lua_State *L)
     
     if(0 != lua_pcall(L, 1, 1, 0))
     {
-        lemoonL_error(L, "can't load module[lnode.bootloader] : %s", lua_tostring(L, -1));
+        lemoonL_error(L, "can't load module[lnode.bootloader] : \n\t%s", lua_tostring(L, -1));
     }
 
     
@@ -56,7 +56,7 @@ static int lnode_pmain(lua_State *L)
     
     if( 0!= lua_pcall(L, args - 1, 0, 0))
     {
-        lemoonL_error(L, "can't load module[lnode.bootloader]'s onload function :%s", lua_tostring(L, -1));
+        lemoonL_error(L, "can't load module[lnode.bootloader]'s onload function :\n\t%s", lua_tostring(L, -1));
     }
     
     return 0;
