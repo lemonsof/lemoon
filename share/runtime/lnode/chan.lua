@@ -5,7 +5,10 @@ local chan =
 		C.SUB = {}
 	end};
 
-	RESP = {};
+	RESP = {__init = function ( C )
+		C.REQ = {}
+		C.RESP = {}
+	end};
 
 	PULL = {__init = function ( C )
 		C.Q = {}
@@ -81,6 +84,53 @@ function chan.PULL.recv( C )
 	coroutine.yield("PULL.recv")
 
 	return table.remove(C.Q)
+end
+
+local function __pop_request( C )
+	local request = table.remove(C.REQ)
+
+	if request  then
+		return table.unpack(request)
+	end
+
+	return nil
+end 
+
+function chan.RESP.recv(C)
+	local self = coroutine.running()
+
+	if C.responder == nil then
+		C.responder = self
+	elseif C.responder ~= self then
+		assert(false,"more than one coroutine call RESP.recv")
+	end
+
+	if #C.REQ > 0 then
+		return __pop_request(C)
+	end
+
+	coroutine.yield("RESP.recv")
+
+	return __pop_request(C)
+end
+
+function chan.RESP.response( C, msg, coro )
+	C.RESP[coro] = msg
+	C.node:wakeup(coro, "RESP.response")
+end
+
+
+function chan.RESP.request( C , msg )
+	local self = coroutine.running()
+	print("request",self,msg)
+	table.insert(C.REQ, 1, {self,msg})
+	if C.responder ~= nil then
+		C.node:wakeup(C.responder, "RESP.recv")
+	end
+
+	coroutine.yield("RESP.response")
+
+	return C.RESP[self]
 end
 
 return chan

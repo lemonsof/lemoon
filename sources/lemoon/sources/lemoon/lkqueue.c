@@ -29,7 +29,7 @@ LEMOON_PRIVATE int lio_niodispatch(lua_State *L, lio*base, int timeout)
         lfile * file = lfile_search((lio*)io, fd);
         if(!file)
         {
-            return;
+            return LEMOON_SUCCESS;
         }
         
         if(filter & EVFILT_READ)
@@ -44,7 +44,7 @@ LEMOON_PRIVATE int lio_niodispatch(lua_State *L, lio*base, int timeout)
     }
     else if(ret == -1)
     {
-        lemoonL_sysmerror(L, errno, "process kevent exception");
+        return lemoonL_sysmerror(L, errno, "process kevent exception");
     }
 }
 

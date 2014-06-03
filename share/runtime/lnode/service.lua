@@ -38,8 +38,10 @@ function service.wakeup( node, coro, event, ...)
 end
 
 function service.dispatch( node )
+
 	local Q = node.running
 	node.running = {}
+
 	for k , v in pairs(Q) do
 		sleep(node, k, coroutine.resume( k, table.unpack(v) ))
 	end
