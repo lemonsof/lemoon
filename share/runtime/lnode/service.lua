@@ -1,32 +1,49 @@
-local service = { services = {} }
+local service = { sleeping = {}; running = {} }
 
 local seq = 0
+
+local sleep = function ( node, coro, status, event)
+
+	if not status then
+		error(event)
+	end
+
+	if coroutine.status(coro) ~= "dead" then
+		node.sleeping[coro] = event
+	end
+end
 
 function service.startservice( node, servicename, ... )
 	local target = require(servicename)
 	assert(type(target) == "table" and type(target.run) == "function" ,string.format("service[%s] must return a table",servicename))
 	local coro = coroutine.create(target.run)
+	sleep(node, coro, coroutine.resume( coro, node, ... ))
+end
 
-	local status, err = coroutine.resume( coro, node, ... )
-	if not status then
-		error(err)
+
+
+function service.wakeup( node, coro, event, ...)
+	local e = node.sleeping[coro]
+	if e == nil then
+		return false
 	end
 
-	local id = seq
-	seq = seq + 1
+	if e == event then
+		node.sleeping[coro] = nil
+		node.running[coro] = table.pack(...)
+		return true
+	end
 
-	if coroutine.status(coro) ~= "dead" then
-		node.services[id] = coro
-		node.services[coro] = id
-	end	
-
-	return id
+	return false
 end
 
-function service.removeservice( node, coro )
-	local id = node.services[coro]
-	node.services[coro] = nil
-	node.services[id] = nil
+function service.dispatch( node )
+	local Q = node.running
+	node.running = {}
+	for k , v in pairs(Q) do
+		sleep(node, k, coroutine.resume( k, table.unpack(v) ))
+	end
 end
+
 
 return service

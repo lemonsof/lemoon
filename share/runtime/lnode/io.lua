@@ -43,35 +43,35 @@ end
 function io.accept( node, sock )
 	local self = coroutine.running ()
 	sock:accept(function ( err, conn, remote )
-		node.wakeup(self, err, conn, remote )
+		node:wakeup(self, "accept", err, conn, remote )
 	end)
 
-	return coroutine.yield()
+	return coroutine.yield("accept")
 end
 
 function io.connect( node, sock, ... )
 	local self = coroutine.running ()
 	sock:connect( ... , function ( err )
-		node.wakeup(self, err )
+		node:wakeup(self,"connect", err )
 	end)
 
-	return coroutine.yield()
+	return coroutine.yield("connect")
 end
 
 function io.send( node, sock, ... )
 	local self = coroutine.running ()
 	sock:send(... , function ( err, bytes )
-		node.wakeup(self,  err, bytes  )
+		node:wakeup(self, "send",  err, bytes  )
 	end)
 
-	return coroutine.yield()
+	return coroutine.yield("send")
 end
 
 function io.sendto( node, sock, msg, host, ... )
 	local self = coroutine.running ()
 
 	local callback = function ( err, bytes )
-		node.wakeup(self,  err, bytes  )
+		node:wakeup(self, "sendto", err, bytes  )
 	end
 
 	if type(host) == "sockaddr.sockaddr" then
@@ -85,27 +85,27 @@ function io.sendto( node, sock, msg, host, ... )
 		end
 	end
 
-	return coroutine.yield()
+	return coroutine.yield("sendto")
 end
 
 function io.recvfrom( node, sock, len, ... )
 	local self = coroutine.running ()
 
 	sock:recvfrom(len, function ( err, msg, remote )
-		node.wakeup(self,  err, msg, remote  )
+		node:wakeup(self, "recvfrom", err, msg, remote  )
 	end, ...)
 
-	return coroutine.yield()
+	return coroutine.yield("recvfrom")
 end
 
 
 function io.recv( node, sock, msg, ... )
 	local self = coroutine.running ()
 	sock:recv(msg , function ( err, bytes )
-		node.wakeup(self,  err, bytes  )
+		node:wakeup(self, "recv", err, bytes  )
 	end, ...)
 
-	return coroutine.yield()
+	return coroutine.yield("recv")
 end
 
 return io

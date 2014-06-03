@@ -3,7 +3,7 @@ local BIF = require "lnode.BIF"
 local bootloader = {}
 
 BIF.open( bootloader, "lnode.io")
-BIF.open( bootloader, "lnode.runq")
+BIF.open( bootloader, "lnode.chan")
 BIF.open( bootloader, "lnode.timer")
 BIF.open( bootloader, "lnode.service")
 
