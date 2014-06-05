@@ -10,14 +10,17 @@ local sleep = function ( node, coro, status, event)
 
 	if coroutine.status(coro) ~= "dead" then
 		node.sleeping[coro] = event
+		return coro
 	end
+
+	return nil
 end
 
 function service.startservice( node, servicename, ... )
 	local target = require(servicename)
 	assert(type(target) == "table" and type(target.run) == "function" ,string.format("service[%s] must return a table",servicename))
 	local coro = coroutine.create(target.run)
-	sleep(node, coro, coroutine.resume( coro, node, ... ))
+	return sleep(node, coro, coroutine.resume( coro, node, ... ))
 end
 
 

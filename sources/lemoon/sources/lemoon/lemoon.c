@@ -1,4 +1,5 @@
 #include <lemoon/lemoon.h>
+#include <lemoon/lbson.h>
 #ifndef WIN32
 #include <sys/time.h>
 #endif
@@ -68,6 +69,7 @@ static luaL_Reg lemoon_funcs[] = {
     { "io", lio_new},
     { "nslookup", lsockaddr_new },
     { "now", lemoon_gettimeofday },
+    { "bson", lbson_new },
     {NULL,NULL}
 };
 

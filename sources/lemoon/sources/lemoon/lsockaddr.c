@@ -6,6 +6,7 @@ typedef struct lsockaddr{
 
 static const struct luaL_Reg lsocketaddr_funcs [] =
 {
+    
     { NULL, NULL }  /* sentinel */
 };
 

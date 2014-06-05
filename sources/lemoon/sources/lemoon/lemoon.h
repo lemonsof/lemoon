@@ -76,6 +76,7 @@ LEMOON_API struct sockaddr* lemoon_tosockaddr(lua_State *L, int index,size_t *le
 //socket APIs
 LEMOON_API void lemoon_newsock(lua_State *L, int index, int fd, int domain, int type, int protocol);
 LEMOON_API int lemoon_closesock(lua_State *L);
+LEMOON_API size_t lemoon_getsockname(lua_State *L, int index, struct sockaddr * name, size_t len);
 LEMOON_API int lemoon_bind(lua_State *L, int index, struct sockaddr * addr, size_t addrlen);
 LEMOON_API void lemoon_listen(lua_State *L, int index,int cnns);
 LEMOON_API int lemoon_accept(lua_State *L, int index,int func);

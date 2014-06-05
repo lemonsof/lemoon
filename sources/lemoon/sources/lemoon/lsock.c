@@ -48,6 +48,17 @@ LEMOON_PRIVATE int lsock_listen(lua_State *L)
     return 0;
 }
 
+LEMOON_PRIVATE int lsock_getsockname(lua_State *L)
+{
+    char buff[LEMOON_SOCKADDR_MAXLEN];
+    
+    size_t length = lemoon_getsockname(L, 1, (struct sockaddr*)buff, LEMOON_SOCKADDR_MAXLEN);
+    
+    lemoon_pushsockaddr(L, (struct sockaddr*)buff, length);
+    
+    return 1;
+}
+
 LEMOON_PRIVATE int lsock_accept(lua_State *L)
 {
     luaL_checkstack(L, 2,NULL);

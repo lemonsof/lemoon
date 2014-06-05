@@ -1,0 +1,1 @@
+return require "lnode.codecs.bson"

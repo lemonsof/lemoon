@@ -41,6 +41,7 @@ static const luaL_Reg sockiocp_funcs [] =
     { "recvfrom", lsock_recvfrom },
     { "close", lemoon_closesock },
     { "connect", lsock_connect },
+    { "sockname", lsock_getsockname },
     { NULL, NULL }
 };
 
@@ -305,6 +306,19 @@ LEMOON_API int lemoon_closesock(lua_State *L)
     }
 
     return 0;
+}
+
+LEMOON_API size_t lemoon_getsockname(lua_State *L, int index, struct sockaddr * name, size_t len)
+{
+    lfile * sock = luaL_checkudata(L, index, LEMOON_REG(LEMOON_SOCK));
+    socklen_t length = (socklen_t)len;
+
+    if (0 == getsockname(sock->fd, name, &length))
+    {
+        return length;
+    }
+
+    return lemoonL_sysmerror(L, WSAGetLastError(), NULL);
 }
 
 LEMOON_API void lemoon_newsock(lua_State *L, int index, int handle, int domain, int type, int protocol)

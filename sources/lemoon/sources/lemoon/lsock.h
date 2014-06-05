@@ -19,6 +19,7 @@ typedef struct lsock {
 
 LEMOON_PRIVATE int lsock_new(lua_State *L);
 LEMOON_PRIVATE int lsock_bind(lua_State *L);
+LEMOON_PRIVATE int lsock_getsockname(lua_State *L);
 LEMOON_PRIVATE int lsock_listen(lua_State *L);
 LEMOON_PRIVATE int lsock_accept(lua_State *L);
 LEMOON_PRIVATE int lsock_send(lua_State *L);
