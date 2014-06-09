@@ -17,8 +17,6 @@
 #include <lemoon/lemoon.h>
 
 LEMOON_PRIVATE int lbson_new(lua_State * L);
-LEMOON_PRIVATE int lbson_typeref(lua_State * L);
-LEMOON_PRIVATE int lbson_read(lua_State * L);
-LEMOON_PRIVATE int lbson_write(lua_State * L);
-
+LEMOON_PRIVATE int lbson_encode(lua_State * L);
+LEMOON_PRIVATE int lbson_decode(lua_State * L);
 #endif // LEMOON_LBSON_H
