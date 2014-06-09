@@ -2,7 +2,7 @@
 
 static const struct luaL_Reg lnode_funcs[] =
 {
-    {"node",lnode_newnode},
+    {"__newnode",lnode_newnode},
     {NULL,NULL}
 };
 

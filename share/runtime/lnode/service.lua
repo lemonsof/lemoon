@@ -5,7 +5,7 @@ local seq = 0
 local sleep = function ( node, coro, status, event)
 
 	if not status then
-		error(event)
+		node:warn(event)
 	end
 
 	if coroutine.status(coro) ~= "dead" then

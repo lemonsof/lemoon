@@ -1,4 +1,8 @@
 #include <lemoon/lemoon.h>
+
+static int lsockaddr_host(lua_State *L);
+static int lsockaddr_service(lua_State *L);
+
 typedef struct lsockaddr{
     size_t                  length;
     char                    data[1];
@@ -6,9 +10,89 @@ typedef struct lsockaddr{
 
 static const struct luaL_Reg lsocketaddr_funcs [] =
 {
-    
+    { "host", lsockaddr_host },
+    { "service",lsockaddr_service },
     { NULL, NULL }  /* sentinel */
 };
+
+static int lsockaddr_host(lua_State *L)
+{
+    size_t len;
+
+    struct sockaddr * addr = lemoon_tosockaddr(L, 1, &len);
+
+    char host[128] = { 0 };
+
+    switch (addr->sa_family)
+    {
+    case AF_INET:{
+
+        struct sockaddr_in *v4 = (struct sockaddr_in*)addr;
+
+        if (!inet_ntop(AF_INET, &v4->sin_addr, host, sizeof(host))){
+#ifdef WIN32
+            return lemoonL_sysmerror(L, WSAGetLastError(), "call inet_ntop exception");
+#else
+            return lemoonL_sysmerror(L, errno, "call inet_ntop exception");
+#endif
+        }
+
+        break;
+    }
+    case AF_INET6:{
+        struct sockaddr_in6 *v6 = (struct sockaddr_in6*)addr;
+
+        if (!inet_ntop(AF_INET6, &v6->sin6_addr, host, sizeof(host))){
+#ifdef WIN32
+            return lemoonL_sysmerror(L, WSAGetLastError(), "call inet_ntop exception");
+#else
+            return lemoonL_sysmerror(L, errno, "call inet_ntop exception");
+#endif
+        }
+
+        break;
+    }
+    default:
+        return lemoonL_error(L, "unknown sockaddr with family(%d)", addr->sa_family);
+    }
+
+    lua_pushstring(L,host);
+
+    return 1;
+}
+
+static int lsockaddr_service(lua_State *L)
+{
+    size_t len;
+
+    struct sockaddr * addr = lemoon_tosockaddr(L, 1, &len);
+
+    int service;
+
+    switch (addr->sa_family)
+    {
+    case AF_INET:{
+        struct sockaddr_in *v4 = (struct sockaddr_in*)addr;
+
+        service = ntohs(v4->sin_port);
+
+        break;
+    }
+    case AF_INET6:{
+        struct sockaddr_in6 *v6 = (struct sockaddr_in6*)addr;
+
+        service = ntohs(v6->sin6_port);
+
+        break;
+    }
+    default:
+        return lemoonL_error(L, "unknown sockaddr with family(%d)", addr->sa_family);
+    }
+
+    lua_pushinteger(L, service);
+
+    return 1;
+}
 
 static int lsockaddr_tostring(lua_State *L){
     size_t len;
