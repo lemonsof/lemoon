@@ -1,6 +1,6 @@
 local lemoon = require "lemoon"
 
-local timer = 
+local timer =
 {
 	timer_accuracy = 10
 }

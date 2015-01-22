@@ -1,5 +1,6 @@
 #include <lemoon/lemoon.h>
 #include <lemoon/lbson.h>
+#include <lemoon/lstream.h>
 #ifndef WIN32
 #include <sys/time.h>
 #endif
@@ -70,6 +71,7 @@ static luaL_Reg lemoon_funcs[] = {
     { "nslookup", lsockaddr_new },
     { "now", lemoon_gettimeofday },
     { "bson", lbson_new },
+	{ "reader", lreader_new },
     {NULL,NULL}
 };
 
@@ -247,10 +249,14 @@ LEMOON_API void * lemoon_newclass(lua_State *L, const char * name, size_t classi
         luaL_setfuncs(L,funcs,0);
         
         lua_setfield(L, -2, "__index");
-        
-        lua_pushcfunction(L, closef);
-        
-        lua_setfield(L, -2, "__gc");
+
+		if (closef != NULL)
+		{
+			lua_pushcfunction(L, closef);
+
+			lua_setfield(L, -2, "__gc");
+		}
+
     }
     
     lua_setmetatable(L, -2);

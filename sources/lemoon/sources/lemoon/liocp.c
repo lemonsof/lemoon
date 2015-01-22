@@ -6,7 +6,7 @@ typedef struct liocp{
     HANDLE                  handle;
 }liocp;
 
-LEMOON_API void lemoon_dispatch(lua_State *L,int index,size_t timeout)
+LEMOON_API int lemoon_dispatch(lua_State *L,int index,size_t timeout)
 {
     liocp *io = luaL_checkudata(L, index, LEMOON_REG(LEMOON_IO));
 
@@ -31,7 +31,7 @@ LEMOON_API void lemoon_dispatch(lua_State *L,int index,size_t timeout)
             lemoonL_error(L, "%s", lua_tostring(L, -1));
         }
 
-        return;
+        return 0 ;
     }
 
     DWORD lasterror = GetLastError();
@@ -56,7 +56,11 @@ LEMOON_API void lemoon_dispatch(lua_State *L,int index,size_t timeout)
                 lemoonL_error(L, "%s", lua_tostring(L, -1));
             }
         }
+
+		return 0;
     }
+
+	return 1;
 }
 
 static int __iocp_close(lua_State *L)

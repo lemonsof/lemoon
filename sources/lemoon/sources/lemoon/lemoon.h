@@ -65,7 +65,7 @@ extern "C" {
 LEMOON_API int luaopen_lemoon(lua_State *L);
 
 LEMOON_API void lemoon_newio(lua_State *L);
-LEMOON_API void lemoon_dispatch(lua_State *L,int index,size_t timeout);
+LEMOON_API int  lemoon_dispatch(lua_State *L,int index,size_t timeout);
 LEMOON_API void lemoon_newtimewheel(lua_State *L,int millisecondsOfTick);
 LEMOON_API void lemoon_tick(lua_State *L,int index);
 LEMOON_API void lemoon_timeout(lua_State *L, int index,size_t timeout);
