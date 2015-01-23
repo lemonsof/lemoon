@@ -6,5 +6,3 @@ set(LEMON_PACKAGE_VERSION "1.0.*")
 if(NOT WIN32)
 	set(LEMON_PACKAGE_LINK_LIBRARIES dl m)
 endif()
-
-

@@ -16,5 +16,6 @@
 #include <lemoon/lemoon.h>
 
 LEMOON_PRIVATE int lreader_new(lua_State * L);
+LEMOON_PRIVATE int lwriter_new(lua_State * L);
 
 #endif //LEMOON_GS_H

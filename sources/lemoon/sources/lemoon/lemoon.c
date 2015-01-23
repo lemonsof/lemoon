@@ -72,6 +72,7 @@ static luaL_Reg lemoon_funcs[] = {
     { "now", lemoon_gettimeofday },
     { "bson", lbson_new },
 	{ "reader", lreader_new },
+	{ "writer", lwriter_new },
     {NULL,NULL}
 };
 

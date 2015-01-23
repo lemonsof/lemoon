@@ -207,8 +207,6 @@ LEMOON_PRIVATE int lreader_new(lua_State * L)
 	return 1;
 }
 
-
-
 static void lwriter_resize(lstream * stream, size_t capacity)
 {
 	if (stream->capacity < capacity)
@@ -227,4 +225,172 @@ static void lwriter_resize(lstream * stream, size_t capacity)
 
 		stream->buff = buff;
 	}
+}
+
+static void lwriter_checkbuf(lstream *stream, size_t buflen)
+{
+	if (stream->capacity - stream->offset < buflen)
+	{
+		lwriter_resize(stream, stream->capacity * 2);
+	}
+}
+
+
+
+LEMOON_PRIVATE int lstream_writebyte(lua_State * L)
+{
+	lstream *stream = (lstream*)luaL_checkudata(L, 1, LWRITER_NAME);
+
+	lwriter_checkbuf(stream, 1);
+
+	stream->buff[stream->offset++] = (char)luaL_checkinteger(L, 2);
+
+	return 0;
+}
+
+LEMOON_PRIVATE int lstream_writeshort(lua_State * L)
+{
+
+	lstream *stream = (lstream*)luaL_checkudata(L, 1, LWRITER_NAME);
+
+	lwriter_checkbuf(stream, 2);
+
+	uint16_t val = (uint16_t)luaL_checkinteger(L, 2);
+
+	stream->buff[stream->offset++] = (char)(val|0xff);
+	stream->buff[stream->offset++] = (char)((val >> 8) | 0xff);
+	
+	return 0;
+}
+
+LEMOON_PRIVATE int lstream_writeint(lua_State * L)
+{
+	lstream *stream = (lstream*)luaL_checkudata(L, 1, LWRITER_NAME);
+
+	lwriter_checkbuf(stream, 4);
+
+	uint32_t val = (uint32_t)luaL_checkinteger(L, 2);
+
+	stream->buff[stream->offset++] = (char)(val | 0xff);
+	stream->buff[stream->offset++] = (char)((val >> 8) | 0xff);
+	stream->buff[stream->offset++] = (char)((val >> 16) | 0xff);
+	stream->buff[stream->offset++] = (char)((val >> 24) | 0xff);
+
+	return 0;
+}
+
+LEMOON_PRIVATE int lstream_writelong(lua_State * L)
+{
+	lstream *stream = (lstream*)luaL_checkudata(L, 1, LWRITER_NAME);
+
+	lwriter_checkbuf(stream, 8);
+
+	luaL_checktype(L, 2, LUA_TNUMBER);
+
+	uint64_t val = (uint64_t)luaL_checkinteger(L, 2);
+
+
+	for (int i = 0; i < 8; i++){
+		stream->buff[stream->offset++] = (char)((val >> (i * 8)) | 0xff);
+	}
+
+	return 0;
+}
+
+LEMOON_PRIVATE int lstream_writedouble(lua_State * L)
+{
+
+	lstream *stream = (lstream*)luaL_checkudata(L, 1, LWRITER_NAME);
+
+	lwriter_checkbuf(stream, 8);
+	
+	double number = (double)luaL_checknumber(L, 2);
+
+	uint64_t val = *(uint64_t*)&number;
+
+	for (int i = 0; i < 8; i++){
+		stream->buff[stream->offset++] = (char)((val >> (i * 8)) | 0xff);
+	}
+
+	return 0;
+}
+
+LEMOON_PRIVATE int lstream_writefloat(lua_State * L)
+{
+
+	lstream *stream = (lstream*)luaL_checkudata(L, 1, LWRITER_NAME);
+
+	lwriter_checkbuf(stream, 4);
+
+	float number = (float)luaL_checknumber(L, 2);
+
+	uint32_t val = *(uint32_t*)&number;
+
+	for (int i = 0; i < 4; i++){
+		stream->buff[stream->offset++] = (char)((val >> (i * 8)) | 0xff);
+	}
+
+	return 0;
+}
+
+LEMOON_PRIVATE int lstream_writestring(lua_State * L)
+{
+	lstream *stream = (lstream*)luaL_checkudata(L, 1, LWRITER_NAME);
+
+	size_t len;
+
+	const char * buf = luaL_checklstring(L, 2, &len);
+
+	lwriter_checkbuf(stream, len + 2);
+
+	uint16_t val = (uint16_t)len;
+
+	stream->buff[stream->offset++] = (char)(val | 0xff);
+	stream->buff[stream->offset++] = (char)((val >> 8) | 0xff);
+
+	memcpy(&stream->buff[stream->offset],buf,len);
+
+	stream->offset += len;
+
+	return 0;
+}
+
+LEMOON_PRIVATE int lstream_writebool(lua_State * L)
+{
+	lstream *stream = (lstream*)luaL_checkudata(L, 1, LWRITER_NAME);
+
+	char val = (char)lua_toboolean(L, 2);
+
+	lwriter_checkbuf(stream, 1);
+
+	stream->buff[stream->offset++] = val;
+
+	return 0;
+}
+
+
+static const luaL_Reg lwriter_funcs[] =
+{
+	{ "WriteSbyte", lstream_writebyte },
+	{ "WriteByte", lstream_writebyte },
+	{ "WriteUint16", lstream_writeshort },
+	{ "WriteInt16", lstream_writeshort },
+	{ "WriteUint32", lstream_writeint },
+	{ "WriteInt32", lstream_writeint },
+	{ "WriteUint64", lstream_writelong },
+	{ "WriteInt64", lstream_writelong },
+	{ "WriteFloat32", lstream_writefloat },
+	{ "WriteFloat64", lstream_writedouble },
+	{ "WriteString", lstream_writestring },
+	{ "WriteBool", lstream_writebool },
+	{ NULL, NULL }
+};
+
+LEMOON_PRIVATE int lwriter_new(lua_State * L)
+{
+	lstream * stream = (lstream*)lemoon_newclass(L, LWRITER_NAME, sizeof(lstream), lwriter_funcs, NULL);
+
+	lwriter_resize(stream,128);
+
+	return 1;
 }

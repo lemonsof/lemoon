@@ -1,4 +1,3 @@
-include(LemonLua)
 include(LemonGlobalSetting)
 
 if(WIN32)
