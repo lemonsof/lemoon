@@ -3,7 +3,7 @@ local rpc = require "gsdocker.rpc"
 
 rpc.open(driver)
 
-driver.connect("172.20.101.245","13512")
+driver.connect("172.20.101.195","13512")
 
 
 while true do

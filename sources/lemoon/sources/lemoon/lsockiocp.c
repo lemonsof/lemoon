@@ -472,7 +472,6 @@ LEMOON_API int lemoon_recv(lua_State *L, int index, int func, size_t len, int fl
     WSABUF wsaBuff;
     wsaBuff.buf = irp->buff;
     wsaBuff.len = (ULONG) len;
-    irp->unknown.flags = flags;
     if (0 != WSARecv(((lfile*) sock)->fd, &wsaBuff, 1, NULL, &irp->unknown.flags, (LPWSAOVERLAPPED) irp, NULL))
     {
         if (WSA_IO_PENDING != WSAGetLastError()){

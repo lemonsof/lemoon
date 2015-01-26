@@ -1,20 +1,20 @@
-/* 
- * below codes is used by cmake lemon lua extension functions 
+/*
+ * below codes is used by cmake lemon lua extension functions
  * do't modify it by hand.
  */
 
 #ifndef EXTERN_C
 #	ifdef __cplusplus
-#		define EXTERN_C    extern "C" 
+#		define EXTERN_C    extern "C"
 #	else
 #		define EXTERN_C    extern
 #	endif
 #endif
 
 #ifdef WIN32
-#	define ${LEMON_PACKAGE_PREFIX}_EXPORT 	__declspec(dllexport) 
-#	define ${LEMON_PACKAGE_PREFIX}_IMPORT 	__declspec(dllimport) 
-#	define ${LEMON_PACKAGE_PREFIX}_PRIVATE
+#	define ${LEMON_PACKAGE_PREFIX}_EXPORT 	__declspec(dllexport)
+#	define ${LEMON_PACKAGE_PREFIX}_IMPORT 	__declspec(dllimport)
+#	define ${LEMON_PACKAGE_PREFIX}_PRIVATE  
 #else
 #	define ${LEMON_PACKAGE_PREFIX}_EXPORT 	__attribute__ ((visibility ("default")))
 #	define ${LEMON_PACKAGE_PREFIX}_IMPORT		__attribute__ ((visibility ("default")))
@@ -33,7 +33,7 @@
 
 #else
 
-#	define ${LEMON_PACKAGE_PREFIX}_API 	EXTERN_C 
-#	define ${LEMON_PACKAGE_PREFIX}_CLASS 	
+#	define ${LEMON_PACKAGE_PREFIX}_API 	EXTERN_C
+#	define ${LEMON_PACKAGE_PREFIX}_CLASS
 
 #endif //${LEMON_PACKAGE_PREFIX}_BUILD_AS_DLL

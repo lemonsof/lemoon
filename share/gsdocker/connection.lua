@@ -1,52 +1,75 @@
 local lemoon = require "lemoon"
 local timer = require "gsdocker.timer"
-
-
-local io =
-{
-  AF_UNSPEC = 0;
-  AF_INET = 2;
-  AF_IMPLINK = 3;
-  AF_PUP = 4;
-  AF_CHAOS = 5;
-  AF_NS = 6;
-  AF_INET6 = 30;
-  AF_IEEE80211 = 37;
-  SOCK_STREAM = 1;
-  SOCK_DGRAM = 2;
-  SOCK_RAW = 3;
-  SOCK_SEQPACKET = 5;
-  IPPROTO_ICMP = 1;
-  IPPROTO_TCP = 6;
-  IPPROTO_UDP = 17;
-}
+local code = require "gsdocker.code"
+local io = require "gsdocker.io"
 
 local module = {}
 
-local connection = {}
+-- the connected socket
+local connection = nil
+local status = io.DISCONNECTED
+
+local closeconnect = function(cnn)
+    cnn.sock:close()
+
+    if connection == cnn then
+        connection = nil
+        status = io.DISCONNECTED
+    end
+
+    if status ~= io.CLOSED then
+        timer.timeout(5000,function()
+            doconnect()
+        end)
+    end
+end
+
+local connected = function(cnn)
+    if status ~= io.CONNECTING then
+        conn.sock:close()
+        return
+    end
+
+    connection = cnn
+    status = io.CONNECTED
+end
 
 local doconnect = function()
-  if connection.sock ~= nil then return end
 
-  connection.sock = connection.io:sock(io.AF_INET, io.SOCK_STREAM, io.IPPROTO_TCP)
+    if status ~= io.DISCONNECTED then return end
 
-  connection.sock:connect( connection.host,connection.port , function ( err )
-    if err ~= nil then
-      timer.timeout(2000,function()
-        -- reconnect
-        doconnect()
+    status = io.CONNECTING
+
+    local conn =
+    {
+        dhkey = lemoon.dhkey(12345,0xfffffff0);
+        sock  = module.io:sock(io.AF_INET, io.SOCK_STREAM, io.IPPROTO_TCP)
+    }
+
+    conn.sock:connect(module.host,module.port,function(err)
+        if err ~= nil then
+            closeconnect(cnn)
+            return
+        end
+
+        io.doexchangekey(conn,function(err)
+            connected(conn)
         end)
-      end
-  end)
+    end)
+
+
 end
 
 function module.connect(io,host,port)
-  connection.io = io
-  connection.host = host
-  connection.port = port
-  doconnect()
+    module.io = io
+    module.host = host
+    module.port = port
+    doconnect()
 end
 
+
+function module.send(msg)
+end
 
 
 return module

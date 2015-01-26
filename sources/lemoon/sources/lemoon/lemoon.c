@@ -1,6 +1,7 @@
 #include <lemoon/lemoon.h>
 #include <lemoon/lbson.h>
 #include <lemoon/lstream.h>
+#include <lemoon/lencrypto.h>
 #ifndef WIN32
 #include <sys/time.h>
 #endif
@@ -73,6 +74,7 @@ static luaL_Reg lemoon_funcs[] = {
     { "bson", lbson_new },
 	{ "reader", lreader_new },
 	{ "writer", lwriter_new },
+	{ "dhkey", ldhkey_new },
     {NULL,NULL}
 };
 

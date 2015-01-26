@@ -1,5 +1,5 @@
 #include <lemoon/lsock.h>
-
+#include <lemoon/lstream.h>
 LEMOON_PRIVATE int lsock_new(lua_State *L)
 {
     luaL_checkstack(L, 3, NULL);
@@ -72,9 +72,24 @@ LEMOON_PRIVATE int lsock_accept(lua_State *L)
 LEMOON_PRIVATE int lsock_send(lua_State *L)
 {
     luaL_checkstack(L, 4, NULL);
-    //liocpsock *sock = luaL_checkudata(L, 1, LEMOON_REG(LEMOON_SOCK));
+
     size_t len;
-    const char *buff = luaL_checklstring(L, 2, &len);
+	const char *buff;
+
+	if (lua_type(L, 2) == LUA_TSTRING)
+	{
+		buff = luaL_checklstring(L, 2, &len);
+	}
+	else
+	{
+		lstream *writer = (lstream*)luaL_checkudata(L, 2,LWRITER_NAME);
+
+		buff = writer->buff;
+		len = writer->offset;
+	}
+	
+
+
     int callback = LUA_NOREF;
     int flags = 0;
     if(lua_type(L,3) == LUA_TFUNCTION)
@@ -102,6 +117,7 @@ LEMOON_PRIVATE int lsock_recv(lua_State *L)
     lua_pushinteger(L, lemoon_recv(L, 1, callback, len, luaL_optinteger(L,4,0)));
     return 1;
 }
+
 LEMOON_PRIVATE int lsock_connect(lua_State *L)
 {
     luaL_checkstack(L, 4, NULL);

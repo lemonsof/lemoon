@@ -1,20 +1,56 @@
 #include <stdint.h>
 #include <lemoon/lstream.h>
 
-#define LREADER_NAME "lreader"
-#define LWRITER_NAME "lwriter"
+static void lstream_resize(lstream * stream, size_t capacity)
+{
+	if (stream->capacity < capacity)
+	{
+		char * buff = malloc(capacity);
 
-typedef struct lreader{
-	char*		buff;
-	size_t      capacity;
-	size_t		offset;
-} lstream;
+		if (stream->buff != NULL)
+		{
+			if (stream->offset > 0)
+			{
+				memcpy(buff, stream->buff, stream->offset);
+			}
+
+			free(stream->buff);
+		}
+
+		stream->buff = buff;
+		stream->capacity = capacity;
+	}
+}
+
+static void lstream_checkbuf(lstream *stream, size_t buflen)
+{
+	if (stream->capacity - stream->offset < buflen)
+	{
+		if (stream->capacity == 0)
+		{
+			lstream_resize(stream, buflen);
+		}
+		else
+		{
+			size_t len = stream->capacity * 2;
+
+			while (len < buflen)
+			{
+				len *= 2;
+			}
+
+			lstream_resize(stream, len);
+		}
+		
+	}
+}
+
 
 LEMOON_PRIVATE int lstream_readbyte(lua_State * L)
 {
 	lstream *stream = (lstream*)luaL_checkudata(L, 1, LREADER_NAME);
 
-	if (stream->offset >= stream->capacity)
+	if (stream->offset > stream->capacity)
 	{
 		return lemoonL_error(L, "out of reader stream range");
 	}
@@ -30,12 +66,13 @@ LEMOON_PRIVATE int lstream_readshort(lua_State * L)
 {
 	lstream *stream = (lstream*)luaL_checkudata(L, 1, LREADER_NAME);
 
-	if ((stream->offset + 2) >= stream->capacity)
+	if ((stream->offset + 2) > stream->capacity)
 	{
 		return lemoonL_error(L, "out of reader stream range");
 	}
 
-	lua_Integer val = stream->buff[stream->offset++] | (stream->buff[stream->offset++] << 8);
+	lua_Integer val = stream->buff[stream->offset++];
+	val |= (stream->buff[stream->offset++] << 8);
 
 	lua_pushinteger(L, val);
 
@@ -46,17 +83,15 @@ LEMOON_PRIVATE int lstream_readint(lua_State * L)
 {
 	lstream *stream = (lstream*)luaL_checkudata(L, 1, LREADER_NAME);
 
-	if ((stream->offset + 4) >= stream->capacity)
+	if ((stream->offset + 4) > stream->capacity)
 	{
 		return lemoonL_error(L, "out of reader stream range");
 	}
 
-	lua_Integer val = 
-		stream->buff[stream->offset++] | 
-		(stream->buff[stream->offset++] << 8)|
-		(stream->buff[stream->offset++] << 16)|
-		(stream->buff[stream->offset++] << 24)
-		;
+	lua_Integer val = stream->buff[stream->offset++];
+	val |= (stream->buff[stream->offset++] << 8);
+	val |= (stream->buff[stream->offset++] << 16);
+	val |= (stream->buff[stream->offset++] << 24);
 
 	lua_pushinteger(L, val);
 
@@ -67,7 +102,7 @@ LEMOON_PRIVATE int lstream_readlong(lua_State * L)
 {
 	lstream *stream = (lstream*)luaL_checkudata(L, 1, LREADER_NAME);
 
-	if ((stream->offset + 8) >= stream->capacity)
+	if ((stream->offset + 8) > stream->capacity)
 	{
 		return lemoonL_error(L, "out of reader stream range");
 	}
@@ -91,7 +126,7 @@ LEMOON_PRIVATE int lstream_readdouble(lua_State * L)
 {
 	lstream *stream = (lstream*)luaL_checkudata(L, 1, LREADER_NAME);
 
-	if ((stream->offset + 8) >= stream->capacity)
+	if ((stream->offset + 8) > stream->capacity)
 	{
 		return lemoonL_error(L, "out of reader stream range");
 	}
@@ -115,17 +150,15 @@ LEMOON_PRIVATE int lstream_readfloat(lua_State * L)
 {
 	lstream *stream = (lstream*)luaL_checkudata(L, 1, LREADER_NAME);
 
-	if ((stream->offset + 4) >= stream->capacity)
+	if ((stream->offset + 4) > stream->capacity)
 	{
 		return lemoonL_error(L, "out of reader stream range");
 	}
 
-	lua_Integer val =
-		stream->buff[stream->offset++] |
-		(stream->buff[stream->offset++] << 8) |
-		(stream->buff[stream->offset++] << 16) |
-		(stream->buff[stream->offset++] << 24)
-		;
+	lua_Integer val = stream->buff[stream->offset++];
+	val |= (stream->buff[stream->offset++] << 8);
+	val |= (stream->buff[stream->offset++] << 16);
+	val |= (stream->buff[stream->offset++] << 24);
 
 	lua_pushnumber(L, *(float*)&val);
 
@@ -136,14 +169,14 @@ LEMOON_PRIVATE int lstream_readstring(lua_State * L)
 {
 	lstream *stream = (lstream*)luaL_checkudata(L, 1, LREADER_NAME);
 
-	if ((stream->offset + 2) >= stream->capacity)
+	if ((stream->offset + 2) > stream->capacity)
 	{
 		return lemoonL_error(L, "out of reader stream range");
 	}
 
 	lua_Integer len = stream->buff[stream->offset++] | (stream->buff[stream->offset++] << 8);
 
-	if ((stream->offset + len) >= stream->capacity)
+	if ((stream->offset + len) > stream->capacity)
 	{
 		return lemoonL_error(L, "out of reader stream range");
 	}
@@ -159,7 +192,7 @@ LEMOON_PRIVATE int lstream_readbool(lua_State * L)
 {
 	lstream *stream = (lstream*)luaL_checkudata(L, 1, LREADER_NAME);
 
-	if (stream->offset >= stream->capacity)
+	if (stream->offset > stream->capacity)
 	{
 		return lemoonL_error(L, "out of reader stream range");
 	}
@@ -171,6 +204,43 @@ LEMOON_PRIVATE int lstream_readbool(lua_State * L)
 	return 1;
 }
 
+LEMOON_PRIVATE int lstream_readbytes(lua_State * L)
+{
+	lstream *stream = (lstream*)luaL_checkudata(L, 1, LREADER_NAME);
+
+	lua_pushlstring(L, &stream->buff[stream->offset], stream->capacity - stream->offset);
+
+	stream->offset = stream->capacity;
+
+	return 1;
+}
+
+LEMOON_PRIVATE int lstream_append(lua_State * L)
+{
+	lstream *stream = (lstream*)luaL_checkudata(L, 1, LREADER_NAME);
+
+	size_t len;
+
+	const char * buff = lua_tolstring(L, -1, &len);
+
+	size_t capacity = stream->capacity;
+
+	lstream_resize(stream, len + stream->capacity);
+
+	memcpy(&stream->buff[capacity], buff, len);
+
+	return 0;
+}
+
+
+LEMOON_PRIVATE int lreader_close(lua_State * L)
+{
+	lstream *stream = (lstream*)luaL_checkudata(L, 1, LREADER_NAME);
+
+	free(stream->buff);
+
+	return 0;
+}
 
 static const luaL_Reg lreader_funcs[] =
 {
@@ -186,53 +256,24 @@ static const luaL_Reg lreader_funcs[] =
 	{ "ReadFloat64", lstream_readdouble },
 	{ "ReadString", lstream_readstring },
 	{ "ReadBool", lstream_readbool },
+	{ "append", lstream_append },
+	{ "bytes", lstream_readbytes },
 	{ NULL, NULL }
 };
 
 LEMOON_PRIVATE int lreader_new(lua_State * L)
 {
-	lstream * stream = (lstream*)lemoon_newclass(L, LREADER_NAME, sizeof(lstream), lreader_funcs, NULL);
+	lstream * stream = (lstream*)lemoon_newclass(L, LREADER_NAME, sizeof(lstream), lreader_funcs, lreader_close);
 
-	size_t len;
-
-	const char * buff = lua_tolstring(L, -1, &len);
-
-	if (len > 0)
+	if (lua_type(L, 1) == LUA_TSTRING)
 	{
-		stream->buff = malloc(len);
-		stream->capacity = len;
+		size_t len;
+		const char * buff = lua_tolstring(L, -1, &len);
+		lstream_checkbuf(stream, len);
 		memcpy(stream->buff, buff, len);
 	}
 
 	return 1;
-}
-
-static void lwriter_resize(lstream * stream, size_t capacity)
-{
-	if (stream->capacity < capacity)
-	{
-		char * buff = malloc(capacity);
-
-		if (stream->buff != NULL)
-		{
-			if (stream->offset > 0)
-			{
-				memcpy(buff, stream->buff, stream->offset);
-			}
-
-			free(stream->buff);
-		}
-
-		stream->buff = buff;
-	}
-}
-
-static void lwriter_checkbuf(lstream *stream, size_t buflen)
-{
-	if (stream->capacity - stream->offset < buflen)
-	{
-		lwriter_resize(stream, stream->capacity * 2);
-	}
 }
 
 
@@ -241,7 +282,7 @@ LEMOON_PRIVATE int lstream_writebyte(lua_State * L)
 {
 	lstream *stream = (lstream*)luaL_checkudata(L, 1, LWRITER_NAME);
 
-	lwriter_checkbuf(stream, 1);
+	lstream_checkbuf(stream, 1);
 
 	stream->buff[stream->offset++] = (char)luaL_checkinteger(L, 2);
 
@@ -253,12 +294,12 @@ LEMOON_PRIVATE int lstream_writeshort(lua_State * L)
 
 	lstream *stream = (lstream*)luaL_checkudata(L, 1, LWRITER_NAME);
 
-	lwriter_checkbuf(stream, 2);
+	lstream_checkbuf(stream, 2);
 
 	uint16_t val = (uint16_t)luaL_checkinteger(L, 2);
 
-	stream->buff[stream->offset++] = (char)(val|0xff);
-	stream->buff[stream->offset++] = (char)((val >> 8) | 0xff);
+	stream->buff[stream->offset++] = (char)(val & 0xff);
+	stream->buff[stream->offset++] = (char)((val >> 8) & 0xff);
 	
 	return 0;
 }
@@ -267,14 +308,14 @@ LEMOON_PRIVATE int lstream_writeint(lua_State * L)
 {
 	lstream *stream = (lstream*)luaL_checkudata(L, 1, LWRITER_NAME);
 
-	lwriter_checkbuf(stream, 4);
+	lstream_checkbuf(stream, 4);
 
 	uint32_t val = (uint32_t)luaL_checkinteger(L, 2);
 
-	stream->buff[stream->offset++] = (char)(val | 0xff);
-	stream->buff[stream->offset++] = (char)((val >> 8) | 0xff);
-	stream->buff[stream->offset++] = (char)((val >> 16) | 0xff);
-	stream->buff[stream->offset++] = (char)((val >> 24) | 0xff);
+	stream->buff[stream->offset++] = (char)(val & 0xff);
+	stream->buff[stream->offset++] = (char)((val >> 8) & 0xff);
+	stream->buff[stream->offset++] = (char)((val >> 16) & 0xff);
+	stream->buff[stream->offset++] = (char)((val >> 24) & 0xff);
 
 	return 0;
 }
@@ -283,7 +324,7 @@ LEMOON_PRIVATE int lstream_writelong(lua_State * L)
 {
 	lstream *stream = (lstream*)luaL_checkudata(L, 1, LWRITER_NAME);
 
-	lwriter_checkbuf(stream, 8);
+	lstream_checkbuf(stream, 8);
 
 	luaL_checktype(L, 2, LUA_TNUMBER);
 
@@ -291,7 +332,7 @@ LEMOON_PRIVATE int lstream_writelong(lua_State * L)
 
 
 	for (int i = 0; i < 8; i++){
-		stream->buff[stream->offset++] = (char)((val >> (i * 8)) | 0xff);
+		stream->buff[stream->offset++] = (char)((val >> (i * 8)) & 0xff);
 	}
 
 	return 0;
@@ -302,14 +343,14 @@ LEMOON_PRIVATE int lstream_writedouble(lua_State * L)
 
 	lstream *stream = (lstream*)luaL_checkudata(L, 1, LWRITER_NAME);
 
-	lwriter_checkbuf(stream, 8);
+	lstream_checkbuf(stream, 8);
 	
 	double number = (double)luaL_checknumber(L, 2);
 
 	uint64_t val = *(uint64_t*)&number;
 
 	for (int i = 0; i < 8; i++){
-		stream->buff[stream->offset++] = (char)((val >> (i * 8)) | 0xff);
+		stream->buff[stream->offset++] = (char)((val >> (i * 8)) & 0xff);
 	}
 
 	return 0;
@@ -320,14 +361,14 @@ LEMOON_PRIVATE int lstream_writefloat(lua_State * L)
 
 	lstream *stream = (lstream*)luaL_checkudata(L, 1, LWRITER_NAME);
 
-	lwriter_checkbuf(stream, 4);
+	lstream_checkbuf(stream, 4);
 
 	float number = (float)luaL_checknumber(L, 2);
 
 	uint32_t val = *(uint32_t*)&number;
 
 	for (int i = 0; i < 4; i++){
-		stream->buff[stream->offset++] = (char)((val >> (i * 8)) | 0xff);
+		stream->buff[stream->offset++] = (char)((val >> (i * 8)) & 0xff);
 	}
 
 	return 0;
@@ -341,12 +382,12 @@ LEMOON_PRIVATE int lstream_writestring(lua_State * L)
 
 	const char * buf = luaL_checklstring(L, 2, &len);
 
-	lwriter_checkbuf(stream, len + 2);
+	lstream_checkbuf(stream, len + 2);
 
 	uint16_t val = (uint16_t)len;
 
-	stream->buff[stream->offset++] = (char)(val | 0xff);
-	stream->buff[stream->offset++] = (char)((val >> 8) | 0xff);
+	stream->buff[stream->offset++] = (char)(val & 0xff);
+	stream->buff[stream->offset++] = (char)((val >> 8) & 0xff);
 
 	memcpy(&stream->buff[stream->offset],buf,len);
 
@@ -361,9 +402,58 @@ LEMOON_PRIVATE int lstream_writebool(lua_State * L)
 
 	char val = (char)lua_toboolean(L, 2);
 
-	lwriter_checkbuf(stream, 1);
+	lstream_checkbuf(stream, 1);
 
 	stream->buff[stream->offset++] = val;
+
+	return 0;
+}
+
+LEMOON_PRIVATE int lstream_length(lua_State * L)
+{
+	lstream *stream = (lstream*)luaL_checkudata(L, 1, LWRITER_NAME);
+
+	lua_pushinteger(L, (lua_Integer)stream->offset);
+
+	return 1;
+}
+
+LEMOON_PRIVATE int lstream_write(lua_State * L)
+{
+	lstream *stream = (lstream*)luaL_checkudata(L, 1, LWRITER_NAME);
+
+	if (lua_type(L, 2) == LUA_TSTRING)
+	{
+		size_t len;
+		const char * buff = lua_tolstring(L, 2, &len);
+
+		lstream_checkbuf(stream, len);
+
+		memcpy(&stream->buff[stream->offset], buff, len);
+
+		stream->offset += len;
+	}
+	else
+	{
+		lstream *rhs = (lstream*)luaL_checkudata(L, 2, LWRITER_NAME);
+
+		lstream_checkbuf(stream, rhs->offset);
+
+		memcpy(&stream->buff[stream->offset], stream->buff, rhs->offset);
+
+		stream->offset += rhs->offset;
+	}
+
+	return 0;
+}
+
+
+
+LEMOON_PRIVATE int lwriter_close(lua_State * L)
+{
+	lstream *stream = (lstream*)luaL_checkudata(L, 1, LWRITER_NAME);
+
+	free(stream->buff);
 
 	return 0;
 }
@@ -383,14 +473,16 @@ static const luaL_Reg lwriter_funcs[] =
 	{ "WriteFloat64", lstream_writedouble },
 	{ "WriteString", lstream_writestring },
 	{ "WriteBool", lstream_writebool },
+	{ "length", lstream_length },
+	{ "write", lstream_write },
 	{ NULL, NULL }
 };
 
 LEMOON_PRIVATE int lwriter_new(lua_State * L)
 {
-	lstream * stream = (lstream*)lemoon_newclass(L, LWRITER_NAME, sizeof(lstream), lwriter_funcs, NULL);
+	lstream * stream = (lstream*)lemoon_newclass(L, LWRITER_NAME, sizeof(lstream), lwriter_funcs, lwriter_close);
 
-	lwriter_resize(stream,128);
+	lstream_resize(stream,128);
 
 	return 1;
 }

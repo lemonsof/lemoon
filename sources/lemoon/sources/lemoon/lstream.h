@@ -15,6 +15,15 @@
 
 #include <lemoon/lemoon.h>
 
+#define LREADER_NAME "lreader"
+#define LWRITER_NAME "lwriter"
+
+typedef struct lreader{
+	char*		buff;
+	size_t      capacity;
+	size_t		offset;
+} lstream;
+
 LEMOON_PRIVATE int lreader_new(lua_State * L);
 LEMOON_PRIVATE int lwriter_new(lua_State * L);
 

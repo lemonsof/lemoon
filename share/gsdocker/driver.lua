@@ -11,6 +11,10 @@ function module.connect(host,port)
   connection.connect(ioservice,host,port)
 end
 
+function module.send(msg)
+    connection.send(msg)
+end
+
 -- dispatch io event
 function module.dispatch(timeout,times)
   for i = 1,times do
