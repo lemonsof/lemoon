@@ -22,7 +22,7 @@ function callmetatable.Invoke(call)
     stream:WriteUint16 (idgen);
     stream:WriteUint16 (call.Service);
     stream:WriteUint16 (call.Method);
-
+    stream:WriteUint16 (#call.params);
     for i,v in ipairs(call.params) do
         stream:WriteUint16(v:length())
         stream:write(v)

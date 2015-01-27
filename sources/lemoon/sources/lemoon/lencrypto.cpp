@@ -12,8 +12,8 @@ typedef struct encrypto_context{
 	BigInt				_R;
 	BigInt				_E;
 	BigInt				_Key;
-	EncryptBlk			_BLK;
-	KeysArray			_Keys;
+	des_context			_context;
+	unsigned char	    _KeyBuff[8];
 }encrypto_context;
 
 
@@ -70,15 +70,13 @@ LEMOON_PRIVATE EXTERN_C int ldhkey_Gen(lua_State *L)
 
 	const char * buff = luaL_checkstring(L, 2);
 
-	context->_Key = pow(BigInt(buff),context->_R,context->_P);
+	context->_Key = pow(BigInt(buff), context->_R, context->_P);
 
-	BigInt::ullong_t val = context->_Key.to_ulong();
+	BigInt::ullong_t key = context->_Key.to_ulong();
 
-	context->_BLK.keyLo = long((val >> 32) & 0xffffffff); 
-
-	context->_BLK.keyHi = long(val & 0xffffffff);
-
-	KeySched(&context->_BLK, context->_Keys, kDESVersion2);
+	for (int i = 0; i < 8; i++){
+		context->_KeyBuff[i] = (char)((key >> ((7 - i) * 8)) & 0xff);
+	}
 
 	return 0;
 }
@@ -96,7 +94,12 @@ LEMOON_PRIVATE EXTERN_C int ldhkey_encode(lua_State *L)
 
 	lstream_resize(stream, length);
 
-	Encode(context->_Keys, stream->offset, stream->buff);
+	des_setkey_enc(&context->_context, context->_KeyBuff);
+
+	for (int i = 0; i < length; i += 8)
+	{
+		des_crypt_ecb(&context->_context, (unsigned char*)&stream->buff[i], (unsigned char*)&stream->buff[i]);
+	}
 
 	return 0;
 }
@@ -112,7 +115,12 @@ LEMOON_PRIVATE EXTERN_C int ldhkey_decode(lua_State *L)
 		return lemoonL_error(L,"invalid encrypt data");
 	}
 
-	Decode(context->_Keys, stream->offset, stream->buff);
+	des_setkey_dec(&context->_context,context->_KeyBuff);
+
+	for (int i = 0; i < stream->offset; i += 8)
+	{
+		des_crypt_ecb(&context->_context, (unsigned char*)&stream->buff[i], (unsigned char*)&stream->buff[i]);
+	}
 
 	return 0;
 }

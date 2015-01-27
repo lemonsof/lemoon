@@ -513,7 +513,7 @@ LEMOON_PRIVATE int lwriter_tostring(lua_State * L)
 
 	for (int i = 0; i < stream->offset; i ++ )
 	{
-		offset += sprintf_s(&buff[offset], length - offset, "%03d ", (unsigned char)stream->buff[i]);
+		offset += sprintf_s(&buff[offset], length - offset, "%d ", (unsigned char)stream->buff[i]);
 	}
 
 	lua_pushlstring(L, buff, length);

@@ -1,58 +1,256 @@
-/*
-* Copyright (c) 2003 Apple Computer, Inc. All rights reserved.
-*
-* @APPLE_LICENSE_HEADER_START@
-*
-* This file contains Original Code and/or Modifications of Original Code
-* as defined in and that are subject to the Apple Public Source License
-* Version 2.0 (the 'License'). You may not use this file except in
-* compliance with the License. Please obtain a copy of the License at
-* http://www.opensource.apple.com/apsl/ and read it before using this
-* file.
-*
-* The Original Code and all software distributed under the License are
-* distributed on an 'AS IS' basis, WITHOUT WARRANTY OF ANY KIND, EITHER
-* EXPRESS OR IMPLIED, AND APPLE HEREBY DISCLAIMS ALL SUCH WARRANTIES,
-* INCLUDING WITHOUT LIMITATION, ANY WARRANTIES OF MERCHANTABILITY,
-* FITNESS FOR A PARTICULAR PURPOSE, QUIET ENJOYMENT OR NON-INFRINGEMENT.
-* Please see the License for the specific language governing rights and
-* limitations under the License.
-*
-* @APPLE_LICENSE_HEADER_END@
-*/
+#ifndef POLARSSL_DES_H
+#define POLARSSL_DES_H
 
 
-#ifndef __DEStypesLocal__
-#define __DEStypesLocal__
+#include <string.h>
+#include <inttypes.h>
 
-typedef long KeysArray[32];			// Encryption Key array type
 
-// Use a version number for the keyschedule routine
-// All new code should use version two.  This contains a bug fix for version 1
+#define DES_ENCRYPT     1
+#define DES_DECRYPT     0
 
-#define kDESVersion1	1 //  PPCToolbox, AFP 2.0 for one way random number exchange.
-#define kDESVersion2 	2 //  AFP 2.1 in FileShare and AppleShare for two way random number exchange.
+#define POLARSSL_ERR_DES_INVALID_INPUT_LENGTH              -0x0032  /**< The data input has an invalid length. */
 
-#define kFixedDESChunk			8
+#define DES_KEY_SIZE    8
 
-typedef struct EncryptBlk
-{
-	unsigned long 	keyHi;
-	unsigned long 	keyLo;
+#if !defined(POLARSSL_DES_ALT)
+// Regular implementation
+//
 
-} EncryptBlk;
-
-#if defined(__cplusplus)
+#ifdef __cplusplus
 extern "C" {
 #endif
 
-	void KeySched(const EncryptBlk *Key, long*	keysArrayPtr, short version);
-	void Encode(long*	keysArrayPtr, long Count, char * encryptData);
-	void Decode(long*	keysArrayPtr, long Count, char * encryptedData);
+	/**
+	* \brief          DES context structure
+	*/
+	typedef struct
+	{
+		int mode;                   /*!<  encrypt/decrypt   */
+		uint32_t sk[32];            /*!<  DES subkeys       */
+	}
+	des_context;
 
-#if defined(__cplusplus)
+	/**
+	* \brief          Triple-DES context structure
+	*/
+	typedef struct
+	{
+		int mode;                   /*!<  encrypt/decrypt   */
+		uint32_t sk[96];            /*!<  3DES subkeys      */
+	}
+	des3_context;
+
+	/**
+	* \brief          Initialize DES context
+	*
+	* \param ctx      DES context to be initialized
+	*/
+	void des_init(des_context *ctx);
+
+	/**
+	* \brief          Clear DES context
+	*
+	* \param ctx      DES context to be cleared
+	*/
+	void des_free(des_context *ctx);
+
+	/**
+	* \brief          Initialize Triple-DES context
+	*
+	* \param ctx      DES3 context to be initialized
+	*/
+	void des3_init(des3_context *ctx);
+
+	/**
+	* \brief          Clear Triple-DES context
+	*
+	* \param ctx      DES3 context to be cleared
+	*/
+	void des3_free(des3_context *ctx);
+
+	/**
+	* \brief          Set key parity on the given key to odd.
+	*
+	*                 DES keys are 56 bits long, but each byte is padded with
+	*                 a parity bit to allow verification.
+	*
+	* \param key      8-byte secret key
+	*/
+	void des_key_set_parity(unsigned char key[DES_KEY_SIZE]);
+
+	/**
+	* \brief          Check that key parity on the given key is odd.
+	*
+	*                 DES keys are 56 bits long, but each byte is padded with
+	*                 a parity bit to allow verification.
+	*
+	* \param key      8-byte secret key
+	*
+	* \return         0 is parity was ok, 1 if parity was not correct.
+	*/
+	int des_key_check_key_parity(const unsigned char key[DES_KEY_SIZE]);
+
+	/**
+	* \brief          Check that key is not a weak or semi-weak DES key
+	*
+	* \param key      8-byte secret key
+	*
+	* \return         0 if no weak key was found, 1 if a weak key was identified.
+	*/
+	int des_key_check_weak(const unsigned char key[DES_KEY_SIZE]);
+
+	/**
+	* \brief          DES key schedule (56-bit, encryption)
+	*
+	* \param ctx      DES context to be initialized
+	* \param key      8-byte secret key
+	*
+	* \return         0
+	*/
+	int des_setkey_enc(des_context *ctx, const unsigned char key[DES_KEY_SIZE]);
+
+	/**
+	* \brief          DES key schedule (56-bit, decryption)
+	*
+	* \param ctx      DES context to be initialized
+	* \param key      8-byte secret key
+	*
+	* \return         0
+	*/
+	int des_setkey_dec(des_context *ctx, const unsigned char key[DES_KEY_SIZE]);
+
+	/**
+	* \brief          Triple-DES key schedule (112-bit, encryption)
+	*
+	* \param ctx      3DES context to be initialized
+	* \param key      16-byte secret key
+	*
+	* \return         0
+	*/
+	int des3_set2key_enc(des3_context *ctx,
+		const unsigned char key[DES_KEY_SIZE * 2]);
+
+	/**
+	* \brief          Triple-DES key schedule (112-bit, decryption)
+	*
+	* \param ctx      3DES context to be initialized
+	* \param key      16-byte secret key
+	*
+	* \return         0
+	*/
+	int des3_set2key_dec(des3_context *ctx,
+		const unsigned char key[DES_KEY_SIZE * 2]);
+
+	/**
+	* \brief          Triple-DES key schedule (168-bit, encryption)
+	*
+	* \param ctx      3DES context to be initialized
+	* \param key      24-byte secret key
+	*
+	* \return         0
+	*/
+	int des3_set3key_enc(des3_context *ctx,
+		const unsigned char key[DES_KEY_SIZE * 3]);
+
+	/**
+	* \brief          Triple-DES key schedule (168-bit, decryption)
+	*
+	* \param ctx      3DES context to be initialized
+	* \param key      24-byte secret key
+	*
+	* \return         0
+	*/
+	int des3_set3key_dec(des3_context *ctx,
+		const unsigned char key[DES_KEY_SIZE * 3]);
+
+	/**
+	* \brief          DES-ECB block encryption/decryption
+	*
+	* \param ctx      DES context
+	* \param input    64-bit input block
+	* \param output   64-bit output block
+	*
+	* \return         0 if successful
+	*/
+	int des_crypt_ecb(des_context *ctx,
+		const unsigned char input[8],
+		unsigned char output[8]);
+
+#if defined(POLARSSL_CIPHER_MODE_CBC)
+	/**
+	* \brief          DES-CBC buffer encryption/decryption
+	*
+	* \param ctx      DES context
+	* \param mode     DES_ENCRYPT or DES_DECRYPT
+	* \param length   length of the input data
+	* \param iv       initialization vector (updated after use)
+	* \param input    buffer holding the input data
+	* \param output   buffer holding the output data
+	*/
+	int des_crypt_cbc(des_context *ctx,
+		int mode,
+		size_t length,
+		unsigned char iv[8],
+		const unsigned char *input,
+		unsigned char *output);
+#endif /* POLARSSL_CIPHER_MODE_CBC */
+
+	/**
+	* \brief          3DES-ECB block encryption/decryption
+	*
+	* \param ctx      3DES context
+	* \param input    64-bit input block
+	* \param output   64-bit output block
+	*
+	* \return         0 if successful
+	*/
+	int des3_crypt_ecb(des3_context *ctx,
+		const unsigned char input[8],
+		unsigned char output[8]);
+
+#if defined(POLARSSL_CIPHER_MODE_CBC)
+	/**
+	* \brief          3DES-CBC buffer encryption/decryption
+	*
+	* \param ctx      3DES context
+	* \param mode     DES_ENCRYPT or DES_DECRYPT
+	* \param length   length of the input data
+	* \param iv       initialization vector (updated after use)
+	* \param input    buffer holding the input data
+	* \param output   buffer holding the output data
+	*
+	* \return         0 if successful, or POLARSSL_ERR_DES_INVALID_INPUT_LENGTH
+	*/
+	int des3_crypt_cbc(des3_context *ctx,
+		int mode,
+		size_t length,
+		unsigned char iv[8],
+		const unsigned char *input,
+		unsigned char *output);
+#endif /* POLARSSL_CIPHER_MODE_CBC */
+
+#ifdef __cplusplus
 }
 #endif
 
+#else  /* POLARSSL_DES_ALT */
+#include "des_alt.h"
+#endif /* POLARSSL_DES_ALT */
+
+#ifdef __cplusplus
+extern "C" {
 #endif
 
+	/**
+	* \brief          Checkup routine
+	*
+	* \return         0 if successful, or 1 if the test failed
+	*/
+	int des_self_test(int verbose);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* des.h */
