@@ -1,6 +1,6 @@
 local lemoon = require "lemoon"
 local timer = require "gsdocker.timer"
-local code = require "gsdocker.code"
+local Code = require "gsdocker.code"
 local io = require "gsdocker.io"
 
 local module = {}
@@ -26,6 +26,96 @@ local closeconnect = function(cnn)
     end
 end
 
+module.recvmessage = function(cnn)
+    io.readmessage(cnn.sock,function(err,reader)
+        if err ~= nil then
+            closeconnect(cnn)
+            return
+        end
+
+        local code = reader:ReadByte()
+
+        reader:ReadUint16() -- read length
+
+        cnn.dhkey:decode(reader)
+
+        if code == Code.Call then
+            local call = {}
+            call.id = reader:ReadUint16()
+            call.service = reader:ReadUint16()
+            call.Method = reader:ReadUint16()
+
+            local count = reader:ReadUint16()
+
+            call.parameters = {}
+
+
+            for i = 0,count - 1 do
+                local length = reader:ReadUint16()
+                call.parameters[i]= lemoon.reader(reader:bytes(length))
+            end
+
+            call.Parameters = function(self)
+                return self.parameters
+            end
+
+            call.Parameters = function(self)
+                return self.parameters
+            end
+
+            call.NewParam = function(call)
+                local param = lemoon.writer ()
+                call.returns[#call.returns + 1] = param
+                return param
+            end
+
+
+            call.Invoke = function(call)
+                local stream = lemoon.writer ()
+                stream:WriteUint16 (call.id);
+                stream:WriteUint16 (call.service);
+                stream:WriteUint16 (#call.returns);
+                for i,v in ipairs(call.params) do
+                    stream:WriteUint16(v:length())
+                    stream:write(v)
+                end
+
+                local msg =
+                {
+                    code = Code.Return;
+                    content = stream;
+                }
+
+                module.send(msg)
+            end
+
+            -- forward call
+        end
+
+        if code == Code.Return then
+            local id = reader:ReadUint16()
+            reader:ReadUint16() -- read service
+            local count = reader:ReadUint16()
+
+            local parameters = {}
+
+
+            for i = 0,count - 1 do
+                local length = reader:ReadUint16()
+                parameters[i]= lemoon.reader(reader:bytes(length))
+            end
+
+            if waitQ[id] ~= nil then
+                waitQ[id](nil,parameters)
+                waitQ[id] = nil
+            end
+
+        end
+
+        module.recvmessage(cnn)
+    end)
+end
+
 local connected = function(cnn)
     if status ~= io.CONNECTING then
         conn.sock:close()
@@ -34,6 +124,8 @@ local connected = function(cnn)
 
     connection = cnn
     status = io.CONNECTED
+
+    module.recvmessage(cnn)
 end
 
 local doconnect = function()
@@ -89,7 +181,11 @@ local dosend = function(msg,callback)
             closeconnect(cnn)
             callback(err)
         end
-        print("send encrypt data")
+
+        if msg.code == Code.Call and msg.callback ~= nil then
+            waitQ[msg.id] = msg.callback
+        end
+
         callback(nil,msg)
 
     end)

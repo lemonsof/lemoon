@@ -28,7 +28,13 @@ function callmetatable.Invoke(call)
         stream:write(v)
     end
 
-    local msg = {code = Code.Call;content = stream}
+    local msg =
+    {
+        code = Code.Call;
+        content = stream;
+        id = idgen;
+        callback = call.Return.callback;
+    }
 
     network.send(msg)
 

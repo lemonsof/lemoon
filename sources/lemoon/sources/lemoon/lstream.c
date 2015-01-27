@@ -257,6 +257,31 @@ LEMOON_PRIVATE int lstream_readlength(lua_State * L)
 }
 
 
+LEMOON_PRIVATE int lreader_tostring(lua_State * L)
+{
+	lstream *stream = (lstream*)luaL_checkudata(L, 1, LREADER_NAME);
+
+	size_t length = (stream->capacity - stream->offset) * 4 + 1;
+
+	char * buff = malloc(length);
+
+	memset(buff, 0, length);
+
+	int offset = 0;
+
+	for (int i = stream->offset; i < stream->capacity; i++)
+	{
+		offset += sprintf_s(&buff[offset], length - offset, "%d ", (unsigned char)stream->buff[i]);
+	}
+
+	lua_pushlstring(L, buff, length);
+
+	free(buff);
+
+	return 1;
+}
+
+
 LEMOON_PRIVATE int lreader_close(lua_State * L)
 {
 	lstream *stream = (lstream*)luaL_checkudata(L, 1, LREADER_NAME);
@@ -283,6 +308,7 @@ static const luaL_Reg lreader_funcs[] =
 	{ "append", lstream_append },
 	{ "bytes", lstream_readbytes },
 	{ "length", lstream_readlength },
+	{ "string", lreader_tostring },
 	{ NULL, NULL }
 };
 

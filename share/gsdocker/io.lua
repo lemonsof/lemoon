@@ -54,9 +54,7 @@ io.readmessage = function(sock, callback)
             return
         end
 
-        print("__readuint16")
         local len = reader:ReadUint16()
-        print("__readuint16 -- finish")
 
         io.readfull(sock,reader,len,function(err)
             callback(err,reader)
@@ -81,7 +79,7 @@ io.doexchangekey = function(conn,callback)
             callback(err)
             return
         end
-        
+
         io.readmessage(conn.sock,function(err,reader)
             if err ~= nil then
                 callback(err)

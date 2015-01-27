@@ -108,16 +108,16 @@ LEMOON_PRIVATE EXTERN_C int ldhkey_decode(lua_State *L)
 {
 	encrypto_context * context = (encrypto_context*)luaL_checkudata(L, 1, DHKEY);
 
-	lstream *stream = (lstream*)luaL_checkudata(L, 2, LWRITER_NAME);
+	lstream *stream = (lstream*)luaL_checkudata(L, 2, LREADER_NAME);
 
-	if ((stream->offset % 8) != 0)
+	if (((stream->capacity - stream->offset) % 8) != 0)
 	{
 		return lemoonL_error(L,"invalid encrypt data");
 	}
 
 	des_setkey_dec(&context->_context,context->_KeyBuff);
 
-	for (int i = 0; i < stream->offset; i += 8)
+	for (int i = stream->offset; i < stream->capacity; i += 8)
 	{
 		des_crypt_ecb(&context->_context, (unsigned char*)&stream->buff[i], (unsigned char*)&stream->buff[i]);
 	}

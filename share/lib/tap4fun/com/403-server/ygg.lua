@@ -6094,15 +6094,6 @@ module.GC = {}
 
 module.GC.Call = function(call)
 
-	Debug_Log(call.Length)
-
-	for i = 0,call.Length - 1 do
-		module.GC.Call2(call[i])
-	end
-end
-
-module.GC.Call2 = function(call)
-
 	local params = call:Parameters()
 
 	if call.Method == 2 then
