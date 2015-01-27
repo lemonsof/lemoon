@@ -1,4 +1,4 @@
-local gsaoi = require "gsaoi"
+local gsaoi = require "lib.tap4fun.com.gsdocker.gsaoi"
 local gsnet = require "gsdocker.rpc"
 local module = {}
 
@@ -6437,7 +6437,7 @@ module.GC.Call2 = function(call)
 	local arg0 = f()
 
 
-		module.GC.metatable.RecvReport(arg0)
+	module.GC.metatable.RecvReport(arg0)
 
 
 		local stream = call:NewReturn()

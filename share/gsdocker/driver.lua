@@ -19,6 +19,7 @@ end
 function module.dispatch(timeout,times)
   for i = 1,times do
     timer.dispatch()
+    connection.dispatch()
     -- no more io event
     if 0 == ioservice:dispatch(timeout) then
       break

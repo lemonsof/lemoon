@@ -8,6 +8,8 @@ local network = nil
 
 local callmetatable = {}
 
+local idgen = 0
+
 function callmetatable.NewParam(call)
     local param = lemoon.writer ()
     call.params[#call.params + 1] = param
@@ -17,22 +19,24 @@ end
 
 function callmetatable.Invoke(call)
     local stream = lemoon.writer ()
-    stream:WriteUint16 (call.ID);
+    stream:WriteUint16 (idgen);
     stream:WriteUint16 (call.Service);
-    stream:WriteUint16 (this.Method);
+    stream:WriteUint16 (call.Method);
 
     for i,v in ipairs(call.params) do
         stream:WriteUint16(v:length())
-        stream:Write(v)
+        stream:write(v)
     end
 
     local msg = {code = Code.Call;content = stream}
 
     network.send(msg)
+
+    idgen = idgen + 1
 end
 
 
-function module.NewCall(service)
+function module.NewCall(self,service)
 
     local call = {
         Service = service;
@@ -46,7 +50,8 @@ function module.NewCall(service)
         self.callback = callback
     end
 
-    setmetatable (call, callmetatable)
+    call.Invoke = callmetatable.Invoke
+    call.NewParam = callmetatable.NewParam
 
     return call
 

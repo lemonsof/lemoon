@@ -18,13 +18,14 @@
 #define LREADER_NAME "lreader"
 #define LWRITER_NAME "lwriter"
 
-typedef struct lreader{
+typedef struct lstream{
 	char*		buff;
 	size_t      capacity;
 	size_t		offset;
 } lstream;
 
-LEMOON_PRIVATE int lreader_new(lua_State * L);
-LEMOON_PRIVATE int lwriter_new(lua_State * L);
+LEMOON_PRIVATE EXTERN_C int lreader_new(lua_State * L);
+LEMOON_PRIVATE EXTERN_C int lwriter_new(lua_State * L);
+LEMOON_PRIVATE EXTERN_C void lstream_resize(lstream * stream, size_t capacity);
 
 #endif //LEMOON_GS_H

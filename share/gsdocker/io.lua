@@ -76,31 +76,38 @@ io.doexchangekey = function(conn,callback)
     stream:WriteByte(Code.DHExchange)
     stream:WriteUint16(#E);
     stream:write(E)
-    conn.sock:send(stream)
-
-    io.readmessage(conn.sock,function(err,reader)
+    conn.sock:send(stream,function(err)
         if err ~= nil then
             callback(err)
             return
         end
+        
+        io.readmessage(conn.sock,function(err,reader)
+            if err ~= nil then
+                callback(err)
+                return
+            end
 
-        local code = reader:ReadByte()
+            local code = reader:ReadByte()
 
-        if code ~= Code.DHExchange then
-            sock:close()
-            callback("dh exchange step2 err")
-            return
-        end
+            if code ~= Code.DHExchange then
+                sock:close()
+                callback("dh exchange step2 err")
+                return
+            end
 
-        reader:ReadUint16()
+            reader:ReadUint16()
 
-        conn.dhkey:Gen(reader:bytes())
+            conn.dhkey:Gen(reader:bytes())
 
-        print(conn.dhkey:Key())
+            print(conn.dhkey:Key())
 
-        callback(nil)
+            callback(nil)
 
+        end)
     end)
+
+
 end
 
 return io
