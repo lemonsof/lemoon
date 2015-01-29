@@ -52,11 +52,10 @@ module.recvmessage = function(cnn)
             local count = reader:ReadUint16()
 
             call.parameters = {}
-
-
+            
             for i = 0,count - 1 do
                 local length = reader:ReadUint16()
-                call.parameters[i]= lemoon.reader(reader:bytes(length))
+                call.parameters[i]= lemoon.buff(reader:ReadBytes(length))
             end
 
             call.Parameters = function(self)
@@ -70,20 +69,20 @@ module.recvmessage = function(cnn)
             call.returns = {}
 
             call.NewReturn = function(call)
-                local param = lemoon.writer ()
+                local param = lemoon.buff ()
                 call.returns[#call.returns + 1] = param
                 return param
             end
 
 
             call.Invoke = function(call)
-                local stream = lemoon.writer ()
+                local stream = lemoon.buff ()
                 stream:WriteUint16 (call.id);
                 stream:WriteUint16 (call.service);
                 stream:WriteUint16 (#call.returns);
                 for i,v in ipairs(call.returns) do
                     stream:WriteUint16(v:length())
-                    stream:write(v)
+                    stream:WriteBytes(v)
                 end
 
                 local msg =
@@ -110,7 +109,7 @@ module.recvmessage = function(cnn)
 
             for i = 0,count - 1 do
                 local length = reader:ReadUint16()
-                parameters[i]= lemoon.reader(reader:bytes(length))
+                parameters[i]= lemoon.buff(reader:ReadBytes(length))
             end
 
             if waitQ[id] ~= nil then
@@ -144,7 +143,7 @@ local doconnect = function()
 
     local conn =
     {
-        dhkey = lemoon.dhkey(12345,0xfffffff0);
+        dhkey = lemoon.encoder("12345","4294967281");
         sock  = module.io:sock(io.AF_INET, io.SOCK_STREAM, io.IPPROTO_TCP)
     }
 
@@ -174,14 +173,14 @@ end
 
 local dosend = function(msg,callback)
 
-    local stream = lemoon.writer()
-    print("before :" .. msg.content:string())
+    local stream = lemoon.buff()
+    print("before :" .. tostring(msg.content))
     connection.dhkey:encode(msg.content)
-    print("after :" .. msg.content:string())
+    print("after :" .. tostring(msg.content))
     stream:WriteUint16(msg.content:length() + 3)
     stream:WriteByte(msg.code)
     stream:WriteUint16(msg.content:length())
-    stream:write(msg.content)
+    stream:WriteBytes(msg.content)
 
     connection.sock:send(stream,function(err)
 

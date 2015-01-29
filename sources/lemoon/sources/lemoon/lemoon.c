@@ -1,7 +1,7 @@
+#include <lemoon/lbuff.h>
 #include <lemoon/lemoon.h>
-#include <lemoon/lbson.h>
-#include <lemoon/lstream.h>
-#include <lemoon/lencrypto.h>
+#include <lemoon/lencoder.h>
+
 #ifndef WIN32
 #include <sys/time.h>
 #endif
@@ -71,10 +71,8 @@ static luaL_Reg lemoon_funcs[] = {
     { "io", lio_new},
     { "nslookup", lsockaddr_new },
     { "now", lemoon_gettimeofday },
-    { "bson", lbson_new },
-	{ "reader", lreader_new },
-	{ "writer", lwriter_new },
-	{ "dhkey", ldhkey_new },
+	{ "encoder", lencoder_new },
+	{ "buff", lbuff_new },
     {NULL,NULL}
 };
 
@@ -239,7 +237,7 @@ LEMOON_API void * lemoon_alloc (void *ud, void *ptr, size_t osize, size_t nsize)
 }
 #endif
 
-LEMOON_API void * lemoon_newclass(lua_State *L, const char * name, size_t classize, const luaL_Reg * funcs,lua_CFunction closef)
+LEMOON_API void * lemoon_newclass(lua_State *L, const char * name, size_t classize, const luaL_Reg * funcs, const luaL_Reg * metafuncs)
 {
     void *obj = lua_newuserdata(L, classize);
     
@@ -253,13 +251,16 @@ LEMOON_API void * lemoon_newclass(lua_State *L, const char * name, size_t classi
         
         lua_setfield(L, -2, "__index");
 
-		if (closef != NULL)
+		for (const luaL_Reg *func = metafuncs; func != NULL; func++)
 		{
-			lua_pushcfunction(L, closef);
+			if (func->name == NULL)
+			{
+				break;
+			}
 
-			lua_setfield(L, -2, "__gc");
+			lua_pushcfunction(L, func->func);
+			lua_setfield(L, -2, func->name);
 		}
-
     }
     
     lua_setmetatable(L, -2);

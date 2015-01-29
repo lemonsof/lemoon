@@ -1,4 +1,7 @@
-INCLUDE (CheckIncludeFiles)
+include (CheckIncludeFiles)
+# include(TestBigEndian)
+
+# TEST_BIG_ENDIAN(LEMOON_BIG_END)
 
 if(WIN32)
 
@@ -40,5 +43,5 @@ CHECK_INCLUDE_FILES (sys/epoll.h LEMOON_HAS_EPOLL_H)
 
 
 if(WIN32)
-	add_definitions(/W4 /D_SCL_SECURE_NO_WARNINGS /D_CRT_SECURE_NO_WARNINGS /wd4127 /wd4100 /wd4701 /wd4602 /wd4431 /wd4193 /wd4161 /wd4244 /wd4702 /wd4324 /wd4055 /wd4054 /wd4018 /wd4310)
+	add_definitions(/W4 /D_SCL_SECURE_NO_WARNINGS /D_CRT_SECURE_NO_WARNINGS /wd4127 /wd4819 /wd4013 /wd4100 /wd4701 /wd4602 /wd4431 /wd4193 /wd4161 /wd4244 /wd4702 /wd4324 /wd4055 /wd4054 /wd4018 /wd4310)
 endif()

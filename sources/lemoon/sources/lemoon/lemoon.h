@@ -105,7 +105,7 @@ LEMOON_API int lemoonL_dostring(lua_State *L,const char * fmt, ...);
 LEMOON_API void * lemoon_alloc (void *ud, void *ptr, size_t osize, size_t nsize);
 #endif
 
-LEMOON_API void * lemoon_newclass(lua_State *L, const char * name, size_t classize, const luaL_Reg * funcs,lua_CFunction closef);
+LEMOON_API void * lemoon_newclass(lua_State *L, const char * name, size_t classize, const luaL_Reg * funcs, const luaL_Reg * metafuncs);
 
 #define lemoonL_error(L,msg,...) lemoon_error((L),__FILE__,__LINE__,(msg),##__VA_ARGS__)
 #define lemoonL_pusherror(L,msg,...) lemoon_pusherror((L),__FILE__,__LINE__,(msg),##__VA_ARGS__)

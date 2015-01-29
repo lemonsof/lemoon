@@ -35,19 +35,19 @@ endif()
   set(LEMON_UNITTEST_GEN_ROOT ${PROJECT_BINARY_DIR}/build/unittest)
 
 if(MSVC)
-    foreach(flag_var CMAKE_C_FLAGS_DEBUG CMAKE_CXX_FLAGS_DEBUG CMAKE_C_FLAGS_RELEASE CMAKE_CXX_FLAGS_RELEASE CMAKE_C_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_MINSIZEREL CMAKE_C_FLAGS_RELWITHDEBINFO CMAKE_CXX_FLAGS_RELWITHDEBINFO) 
+    foreach(flag_var CMAKE_C_FLAGS_DEBUG CMAKE_CXX_FLAGS_DEBUG CMAKE_C_FLAGS_RELEASE CMAKE_CXX_FLAGS_RELEASE CMAKE_C_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_MINSIZEREL CMAKE_C_FLAGS_RELWITHDEBINFO CMAKE_CXX_FLAGS_RELWITHDEBINFO)
       string(REGEX REPLACE "/MD" "/MT" ${flag_var} "${${flag_var}}")
       string(REGEX REPLACE "/MDd" "/MTd" ${flag_var} "${${flag_var}}")
     endforeach(flag_var)
 elseif(UNIX)
 
-  CHECK_CXX_COMPILER_FLAG(-std=c++11 LEMON_CXX_11)
-
-  if(NOT LEMON_CXX_11)
-    message(FATAL_ERROR "the cxx compiler not support c++11,you should chose other compiler")
-  endif()
-
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+  # CHECK_CXX_COMPILER_FLAG(-std=c++11 LEMON_CXX_11)
+  #
+  # if(NOT LEMON_CXX_11)
+  #   message(FATAL_ERROR "the cxx compiler not support c++11,you should chose other compiler")
+  # endif()
+  #
+  # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99")
 endif()
 
