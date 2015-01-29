@@ -58,14 +58,31 @@ LEMOON_PRIVATE int lstream_readbyte(lua_State * L)
 		return lemoonL_error(L, "out of reader stream range");
 	}
 
-	lua_Integer val = stream->buff[stream->offset++];
+	char val = stream->buff[stream->offset++];
+
+	lua_pushinteger(L, (unsigned char)val);
+
+	return 1;
+}
+
+LEMOON_PRIVATE int lstream_readsbyte(lua_State * L)
+{
+	lstream *stream = (lstream*)luaL_checkudata(L, 1, LREADER_NAME);
+
+
+	if (stream->offset > stream->capacity)
+	{
+		return lemoonL_error(L, "out of reader stream range");
+	}
+
+	char val = stream->buff[stream->offset++];
 
 	lua_pushinteger(L, val);
 
 	return 1;
 }
 
-LEMOON_PRIVATE int lstream_readshort(lua_State * L)
+LEMOON_PRIVATE int lstream_readint16(lua_State * L)
 {
 	lstream *stream = (lstream*)luaL_checkudata(L, 1, LREADER_NAME);
 
@@ -74,15 +91,32 @@ LEMOON_PRIVATE int lstream_readshort(lua_State * L)
 		return lemoonL_error(L, "out of reader stream range");
 	}
 
-	lua_Integer val = stream->buff[stream->offset++];
-	val |= (stream->buff[stream->offset++] << 8);
+	lua_Integer val = stream->buff[stream->offset++] & 0xff;
+	val |= (stream->buff[stream->offset++] << 8) & 0xff00;
 
 	lua_pushinteger(L, val);
 
 	return 1;
 }
 
-LEMOON_PRIVATE int lstream_readint(lua_State * L)
+LEMOON_PRIVATE int lstream_readuint16(lua_State * L)
+{
+	lstream *stream = (lstream*)luaL_checkudata(L, 1, LREADER_NAME);
+
+	if ((stream->offset + 2) > stream->capacity)
+	{
+		return lemoonL_error(L, "out of reader stream range");
+	}
+
+	unsigned short val = stream->buff[stream->offset++] & 0xff;
+	val |= (unsigned short)(stream->buff[stream->offset++] << 8) & 0xff00;
+
+	lua_pushnumber(L, val);
+
+	return 1;
+}
+
+LEMOON_PRIVATE int lstream_readint32(lua_State * L)
 {
 	lstream *stream = (lstream*)luaL_checkudata(L, 1, LREADER_NAME);
 
@@ -91,17 +125,36 @@ LEMOON_PRIVATE int lstream_readint(lua_State * L)
 		return lemoonL_error(L, "out of reader stream range");
 	}
 
-	lua_Integer val = stream->buff[stream->offset++];
-	val |= (stream->buff[stream->offset++] << 8);
-	val |= (stream->buff[stream->offset++] << 16);
-	val |= (stream->buff[stream->offset++] << 24);
+	uint32_t val = stream->buff[stream->offset++] & 0xff;
+	val |= (stream->buff[stream->offset++] << 8) & 0xff00;
+	val |= (stream->buff[stream->offset++] << 16) & 0xff0000;
+	val |= (stream->buff[stream->offset++] << 24) & 0xff000000;
 
-	lua_pushinteger(L, val);
+	lua_pushinteger(L, (int32_t)val);
 
 	return 1;
 }
 
-LEMOON_PRIVATE int lstream_readlong(lua_State * L)
+LEMOON_PRIVATE int lstream_readuint32(lua_State * L)
+{
+	lstream *stream = (lstream*)luaL_checkudata(L, 1, LREADER_NAME);
+
+	if ((stream->offset + 4) > stream->capacity)
+	{
+		return lemoonL_error(L, "out of reader stream range");
+	}
+
+	uint32_t val = stream->buff[stream->offset++] & 0xff;
+	val |= (stream->buff[stream->offset++] << 8) & 0xff00;
+	val |= (stream->buff[stream->offset++] << 16) & 0xff0000;
+	val |= (stream->buff[stream->offset++] << 24) & 0xff000000;
+
+	lua_pushnumber(L, val);
+
+	return 1;
+}
+
+LEMOON_PRIVATE int lstream_readint64(lua_State * L)
 {
 	lstream *stream = (lstream*)luaL_checkudata(L, 1, LREADER_NAME);
 
@@ -110,11 +163,39 @@ LEMOON_PRIVATE int lstream_readlong(lua_State * L)
 		return lemoonL_error(L, "out of reader stream range");
 	}
 
-	int64_t ret = 0;
+	uint64_t ret = stream->buff[stream->offset++] & 0xff;
+	ret |= ((uint64_t)stream->buff[stream->offset++] << 8) & 0xff00;
+	ret |= ((uint64_t)stream->buff[stream->offset++] << 16) & 0xff0000;
+	ret |= ((uint64_t)stream->buff[stream->offset++] << 24) & 0xff000000;
+	ret |= ((uint64_t)stream->buff[stream->offset++] << 32) & 0xff00000000;
+	ret |= ((uint64_t)stream->buff[stream->offset++] << 40) & 0xff0000000000;
+	ret |= ((uint64_t)stream->buff[stream->offset++] << 48) & 0xff000000000000;
+	ret |= ((uint64_t)stream->buff[stream->offset++] << 56) & 0xff00000000000000;
 
-	for (int i = 0; i < 8; i++){
-		ret |= ((int64_t)stream->buff[i + stream->offset]) << (i * 8);
+	stream->offset += 8;
+
+	lua_pushnumber(L, (lua_Number)ret);
+
+	return 1;
+}
+
+LEMOON_PRIVATE int lstream_readuint64(lua_State * L)
+{
+	lstream *stream = (lstream*)luaL_checkudata(L, 1, LREADER_NAME);
+
+	if ((stream->offset + 8) > stream->capacity)
+	{
+		return lemoonL_error(L, "out of reader stream range");
 	}
+
+	uint64_t ret = stream->buff[stream->offset++] & 0xff;
+	ret |= ((uint64_t)stream->buff[stream->offset++] << 8) & 0xff00;
+	ret |= ((uint64_t)stream->buff[stream->offset++] << 16) & 0xff0000;
+	ret |= ((uint64_t)stream->buff[stream->offset++] << 24) & 0xff000000;
+	ret |= ((uint64_t)stream->buff[stream->offset++] << 32) & 0xff00000000;
+	ret |= ((uint64_t)stream->buff[stream->offset++] << 40) & 0xff0000000000;
+	ret |= ((uint64_t)stream->buff[stream->offset++] << 48) & 0xff000000000000;
+	ret |= ((uint64_t)stream->buff[stream->offset++] << 56) & 0xff00000000000000;
 
 	stream->offset += 8;
 
@@ -134,11 +215,14 @@ LEMOON_PRIVATE int lstream_readdouble(lua_State * L)
 		return lemoonL_error(L, "out of reader stream range");
 	}
 
-	int64_t ret = 0;
-
-	for (int i = 0; i < 8; i++){
-		ret |= ((int64_t)stream->buff[i + stream->offset]) << (i * 8);
-	}
+	uint64_t ret = stream->buff[stream->offset++] & 0xff;
+	ret |= ((uint64_t)stream->buff[stream->offset++] << 8) & 0xff00;
+	ret |= ((uint64_t)stream->buff[stream->offset++] << 16) & 0xff0000;
+	ret |= ((uint64_t)stream->buff[stream->offset++] << 24) & 0xff000000;
+	ret |= ((uint64_t)stream->buff[stream->offset++] << 32) & 0xff00000000;
+	ret |= ((uint64_t)stream->buff[stream->offset++] << 40) & 0xff0000000000;
+	ret |= ((uint64_t)stream->buff[stream->offset++] << 48) & 0xff000000000000;
+	ret |= ((uint64_t)stream->buff[stream->offset++] << 56) & 0xff00000000000000;
 
 	stream->offset += 8;
 
@@ -158,10 +242,10 @@ LEMOON_PRIVATE int lstream_readfloat(lua_State * L)
 		return lemoonL_error(L, "out of reader stream range");
 	}
 
-	lua_Integer val = stream->buff[stream->offset++];
-	val |= (stream->buff[stream->offset++] << 8);
-	val |= (stream->buff[stream->offset++] << 16);
-	val |= (stream->buff[stream->offset++] << 24);
+	uint32_t val = stream->buff[stream->offset++] & 0xff;
+	val |= (stream->buff[stream->offset++] << 8) & 0xff00;
+	val |= (stream->buff[stream->offset++] << 16) & 0xff0000;
+	val |= (stream->buff[stream->offset++] << 24) & 0xff000000;
 
 	lua_pushnumber(L, *(float*)&val);
 
@@ -177,11 +261,13 @@ LEMOON_PRIVATE int lstream_readstring(lua_State * L)
 		return lemoonL_error(L, "out of reader stream range");
 	}
 
-	lua_Integer len = stream->buff[stream->offset++] | (stream->buff[stream->offset++] << 8);
+	unsigned short len = stream->buff[stream->offset++] & 0xff;
+	
+	len |= (stream->buff[stream->offset++] << 8) & 0xff00;
 
 	if ((stream->offset + len) > stream->capacity)
 	{
-		return lemoonL_error(L, "out of reader stream range");
+		return lemoonL_error(L, "out of reader stream range :(%d,%d,%d)", stream->offset,stream->capacity,len);
 	}
 
 	lua_pushlstring(L, &stream->buff[stream->offset], len);
@@ -293,14 +379,14 @@ LEMOON_PRIVATE int lreader_close(lua_State * L)
 
 static const luaL_Reg lreader_funcs[] =
 {
-	{"ReadSbyte",lstream_readbyte},
+	{"ReadSbyte",lstream_readsbyte},
 	{ "ReadByte", lstream_readbyte },
-	{ "ReadUint16", lstream_readshort },
-	{ "ReadInt16", lstream_readshort },
-	{ "ReadUint32", lstream_readint },
-	{ "ReadInt32", lstream_readint },
-	{ "ReadUint64", lstream_readlong },
-	{ "ReadInt64", lstream_readlong },
+	{ "ReadUint16", lstream_readuint16 },
+	{ "ReadInt16", lstream_readint16 },
+	{ "ReadUint32", lstream_readuint32 },
+	{ "ReadInt32", lstream_readint32 },
+	{ "ReadUint64", lstream_readuint64 },
+	{ "ReadInt64", lstream_readint64 },
 	{ "ReadFloat32", lstream_readfloat },
 	{ "ReadFloat64", lstream_readdouble },
 	{ "ReadString", lstream_readstring },
@@ -574,6 +660,7 @@ LEMOON_PRIVATE int lwriter_new(lua_State * L)
 	lstream * stream = (lstream*)lemoon_newclass(L, LWRITER_NAME, sizeof(lstream), lwriter_funcs, lwriter_close);
 
 	lstream_resize(stream,128);
+	stream->flag = LWRITER;
 
 	return 1;
 }

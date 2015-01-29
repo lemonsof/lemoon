@@ -11,12 +11,16 @@ local status = io.DISCONNECTED
 local cacheQ = {}
 local waitQ = {}
 
+local GC = nil
+
 local closeconnect = function(cnn)
     cnn.sock:close()
 
     if connection == cnn then
         connection = nil
-        status = io.DISCONNECTED
+        if status ~= io.CLOSED then
+            status = io.DISCONNECTED
+        end
     end
 
     if status ~= io.CLOSED then
@@ -39,7 +43,7 @@ module.recvmessage = function(cnn)
 
         cnn.dhkey:decode(reader)
 
-        if code == Code.Call then
+        if code == Code.Call and GC ~= nil then
             local call = {}
             call.id = reader:ReadUint16()
             call.service = reader:ReadUint16()
@@ -63,7 +67,9 @@ module.recvmessage = function(cnn)
                 return self.parameters
             end
 
-            call.NewParam = function(call)
+            call.returns = {}
+
+            call.NewReturn = function(call)
                 local param = lemoon.writer ()
                 call.returns[#call.returns + 1] = param
                 return param
@@ -75,7 +81,7 @@ module.recvmessage = function(cnn)
                 stream:WriteUint16 (call.id);
                 stream:WriteUint16 (call.service);
                 stream:WriteUint16 (#call.returns);
-                for i,v in ipairs(call.params) do
+                for i,v in ipairs(call.returns) do
                     stream:WriteUint16(v:length())
                     stream:write(v)
                 end
@@ -88,6 +94,8 @@ module.recvmessage = function(cnn)
 
                 module.send(msg)
             end
+
+            GC(call)
 
             -- forward call
         end
@@ -209,9 +217,21 @@ function module.connect(io,host,port)
     doconnect()
 end
 
+
+function module.GC(api)
+    GC = api
+end
+
 function module.send(msg)
     if status == io.CLOSED then return end
     append(cacheQ,msg)
+end
+
+function module.close()
+    status = io.CLOSED
+    if connection ~= nil then
+        closeconnect(connection)
+    end
 end
 
 function module.dispatch()

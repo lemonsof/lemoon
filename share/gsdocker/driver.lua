@@ -15,6 +15,14 @@ function module.send(msg)
     connection.send(msg)
 end
 
+function module.GC(api)
+    connection.GC(api)
+end
+
+function module.close()
+    connection.close()
+end
+
 -- dispatch io event
 function module.dispatch(timeout,times)
   for i = 1,times do

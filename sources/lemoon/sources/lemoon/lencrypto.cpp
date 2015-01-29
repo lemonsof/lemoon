@@ -70,7 +70,9 @@ LEMOON_PRIVATE EXTERN_C int ldhkey_Gen(lua_State *L)
 
 	const char * buff = luaL_checkstring(L, 2);
 
-	context->_Key = pow(BigInt(buff), context->_R, context->_P);
+	BigInt E = BigInt(buff);
+
+	context->_Key = pow(E, context->_R, context->_P);
 
 	BigInt::ullong_t key = context->_Key.to_ulong();
 
@@ -108,7 +110,7 @@ LEMOON_PRIVATE EXTERN_C int ldhkey_decode(lua_State *L)
 {
 	encrypto_context * context = (encrypto_context*)luaL_checkudata(L, 1, DHKEY);
 
-	lstream *stream = (lstream*)luaL_checkudata(L, 2, LREADER_NAME);
+	lstream *stream = (lstream*)lua_touserdata(L, 2);
 
 	if (((stream->capacity - stream->offset) % 8) != 0)
 	{
@@ -117,10 +119,22 @@ LEMOON_PRIVATE EXTERN_C int ldhkey_decode(lua_State *L)
 
 	des_setkey_dec(&context->_context,context->_KeyBuff);
 
-	for (int i = stream->offset; i < stream->capacity; i += 8)
+	if (stream->flag == LREADER)
 	{
-		des_crypt_ecb(&context->_context, (unsigned char*)&stream->buff[i], (unsigned char*)&stream->buff[i]);
+		for (int i = stream->offset; i < stream->capacity; i += 8)
+		{
+			des_crypt_ecb(&context->_context, (unsigned char*)&stream->buff[i], (unsigned char*)&stream->buff[i]);
+		}
 	}
+	else
+	{
+		for (int i = 0; i < stream->offset; i += 8)
+		{
+			des_crypt_ecb(&context->_context, (unsigned char*)&stream->buff[i], (unsigned char*)&stream->buff[i]);
+		}
+	}
+
+	
 
 	return 0;
 }
@@ -137,14 +151,14 @@ static const luaL_Reg ldhkey_funcs[] =
 
 LEMOON_PRIVATE EXTERN_C int ldhkey_new(lua_State * L)
 {
-	BigInt G = BigInt(luaL_checkinteger(L,1));
-	BigInt P = BigInt(luaL_checkinteger(L, 2));
+	BigInt G = BigInt(luaL_checkstring(L,1));
+	BigInt P = BigInt(luaL_checkstring(L, 2));
 
 	void * data = lemoon_newclass(L, DHKEY, sizeof(encrypto_context), ldhkey_funcs, ldhkey_gc);
 
 	encrypto_context * context = new(data)encrypto_context();
 
-	context->_R = 10232023223210;
+	context->_R = 1023202;
 
 	context->_E = pow(G,context->_R,P);
 
