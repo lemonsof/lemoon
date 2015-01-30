@@ -1,14 +1,12 @@
 #define LUA_LIB
 
-#include "lua.h"
-#include "lauxlib.h"
+#include "lua.hpp"
 #include "lnet.h"
-
 #include <string.h>
 
 #if defined(WIN32) || defined (WP8)
 #include <string>
-#	define WIN32_LEAN_AND_MEAN  
+#	define WIN32_LEAN_AND_MEAN
 #	include <Windows.h>
 #endif
 

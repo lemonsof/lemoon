@@ -47,7 +47,7 @@ elseif(UNIX)
   #   message(FATAL_ERROR "the cxx compiler not support c++11,you should chose other compiler")
   # endif()
   #
-  # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99")
 endif()
 

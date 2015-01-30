@@ -6,49 +6,49 @@
 //
 //
 
-#ifndef lemoonxx_lua_lstate_hpp
-#define lemoonxx_lua_lstate_hpp
+#ifndef lemoonxx_vmua_vmstate_hpp
+#define lemoonxx_vmua_vmstate_hpp
 #include <sstream>
 #include <lua/lua.hpp>
 #include <lemoonxx/nocopyable.hpp>
 
 namespace lemoon{namespace luabind {
-    
+
     class state :private nocopyable
     {
     public:
-        state(lua_Alloc alloc , void * ud) :_L(lua_newstate(alloc,ud))
+        state(lua_Alloc alloc , void * ud) :_vm(lua_newstate(alloc,ud))
         {
-            if (_L == nullptr)
-            {
-                throw std::runtime_error("can't open lua virtual machine.");
-            }
-            
-            luaL_openlibs(_L);
-        }
-        state() :_L(luaL_newstate())
-        {
-            if (_L == nullptr)
+            if (_vm == nullptr)
             {
                 throw std::runtime_error("can't open lua virtual machine.");
             }
 
-            luaL_openlibs(_L);
+            luaL_openlibs(_vm);
+        }
+        state() :_vm(luaL_newstate())
+        {
+            if (_vm == nullptr)
+            {
+                throw std::runtime_error("can't open lua virtual machine.");
+            }
+
+            luaL_openlibs(_vm);
         }
         ~state()
         {
-            lua_close(_L);
+            lua_close(_vm);
         }
-        
+
         operator lua_State*()
         {
-            return _L;
+            return _vm;
         }
 
-        
+
 
     private:
-        lua_State               *_L;
+        lua_State               *_vm;
     };
 
     inline void search_path(lua_State *L ,const char* path)
