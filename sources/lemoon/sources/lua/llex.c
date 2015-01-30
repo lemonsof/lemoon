@@ -201,9 +201,13 @@ static void buffreplace (LexState *ls, char from, char to) {
 }
 
 
-//#if !defined(getlocaledecpoint)
-//#define getlocaledecpoint()	(localeconv()->decimal_point[0])
-//#endif
+#if !defined(getlocaledecpoint)
+#ifdef ANDROID
+#define getlocaledecpoint()	('.')
+#else
+#define getlocaledecpoint()	(localeconv()->decimal_point[0])
+#endif
+#endif
 
 
 #define buff2d(b,e)	luaO_str2d(luaZ_buffer(b), luaZ_bufflen(b) - 1, e)
@@ -214,7 +218,7 @@ static void buffreplace (LexState *ls, char from, char to) {
 */
 static void trydecpoint (LexState *ls, SemInfo *seminfo) {
   char old = ls->decpoint;
-  ls->decpoint = '.';
+  ls->decpoint = getlocaledecpoint();
   buffreplace(ls, old, ls->decpoint);  /* try new decimal separator */
   if (!buff2d(ls->buff, &seminfo->r)) {
     /* format error with correct decimal point: no more options */
