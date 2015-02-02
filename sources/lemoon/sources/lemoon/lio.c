@@ -184,7 +184,6 @@ LEMOON_PRIVATE lfile* lfile_new(lua_State *L, lio * io, size_t len, const char *
 LEMOON_PRIVATE lfile* lfile_search(lio * io, int fd)
 {
     size_t hashcode = __io_hash(fd, io->buckets);
-    //printf("search file(hashcode:%zu) :%d\n",hashcode,fd);
     
     lfile * current = io->files[hashcode];
     

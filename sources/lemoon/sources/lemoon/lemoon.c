@@ -1,7 +1,7 @@
 #include <lemoon/lbuff.h>
 #include <lemoon/lemoon.h>
 #include <lemoon/lencoder.h>
-
+#include <lemoon/llog.h>
 #ifndef WIN32
 #include <sys/time.h>
 #endif
@@ -73,6 +73,7 @@ static luaL_Reg lemoon_funcs[] = {
     { "now", lemoon_gettimeofday },
 	{ "encoder", lencoder_new },
 	{ "buff", lbuff_new },
+	{ "log", llog_print },
     {NULL,NULL}
 };
 

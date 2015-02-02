@@ -56,6 +56,16 @@ extern "C" {
 #define LEMOON_RUNTIME_ERROR                        -2
 #define LEMOON_NOFUTURE                             -1
 
+#define LEMOON_LOG_UNKNOWN							0
+#define LEMOON_LOG_DEFAULT							1
+#define LEMOON_LOG_VERBOSE							2
+#define LEMOON_LOG_DEBUG							3
+#define LEMOON_LOG_INFO								4
+#define LEMOON_LOG_WARN								5
+#define LEMOON_LOG_ERROR							6
+#define LEMOON_LOG_FATAL							7
+#define LEMOON_LOG_SILENT							8
+
 //////////////////////////////////////////////////////////////////////////
 //lemoon core APIs
 
@@ -97,6 +107,9 @@ LEMOON_API int lemoon_error(lua_State *L,const char * file, int lines, const cha
 LEMOON_API void lemoon_pusherror(lua_State *L, const char * file, int lines, const char* msg, ...);
 LEMOON_API void lemoon_pushsysmerror(lua_State *L,int errcode, const char * file, int lines, const char* msg,...);
 LEMOON_API int lemoon_sysmerror(lua_State *L, int errcode, const char * file, int lines, const char* msg, ...);
+
+
+LEMOON_API void lemoon_log(lua_State *L, int loglevel, const char *tag, const char* msg, ...);
 
 //utils APIs
 LEMOON_API int lemoonL_dostring(lua_State *L,const char * fmt, ...);

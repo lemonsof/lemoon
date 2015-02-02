@@ -6,3 +6,7 @@ set(LEMON_PACKAGE_VERSION "1.0.*")
 set(LEMON_PACKAGE_EXE_NAME lnode)
 
 #include_directories(${Jemalloc_INCLUDE_DIR})
+
+if(ANDROID)
+    set(LEMON_PACKAGE_LINK_LIBRARIES log)
+endif()

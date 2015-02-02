@@ -52,7 +52,7 @@ module.recvmessage = function(cnn)
             local count = reader:ReadUint16()
 
             call.parameters = {}
-            
+
             for i = 0,count - 1 do
                 local length = reader:ReadUint16()
                 call.parameters[i]= lemoon.buff(reader:ReadBytes(length))
@@ -149,7 +149,7 @@ local doconnect = function()
 
     conn.sock:connect(module.host,module.port,function(err)
         if err ~= nil then
-            closeconnect(cnn)
+            closeconnect(conn)
             return
         end
 
@@ -185,7 +185,7 @@ local dosend = function(msg,callback)
     connection.sock:send(stream,function(err)
 
         if err ~= nil then
-            closeconnect(cnn)
+            closeconnect(connection)
             callback(err)
         end
 
