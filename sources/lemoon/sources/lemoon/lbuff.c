@@ -542,9 +542,9 @@ static int lbuff_tostring(lua_State * L)
 
 	memset(printbuf, 0, length);
 
-	int offset = 0;
+	size_t offset = 0;
 
-	for (int i = buff->read_offset; i < buff->write_offset; i++)
+	for (size_t i = buff->read_offset; i < buff->write_offset; i++)
 	{
 #if WIN32
 		offset += sprintf_s(&printbuf[offset], length - offset, "%d ", (unsigned char)buff->block[i]);
