@@ -17,7 +17,7 @@ LEMOON_PRIVATE int lio_niodispatch(lua_State *L, lio*base, int timeout)
     
     if(ret == -1)
     {
-        lemoonL_sysmerror(L, errno, "process epoll exception");
+        return lemoonL_sysmerror(L, errno, "process epoll exception");
     }
     else if(ret == 1)
     {
@@ -34,7 +34,7 @@ LEMOON_PRIVATE int lio_niodispatch(lua_State *L, lio*base, int timeout)
                     lfile_process_rwQ(L,(lio*)io, file->readQ,errno);
                     lfile_process_rwQ(L,(lio*)io, file->writeQ,errno);
                     lio_dispatchcomplete(L, (lio*)io);
-                    return;
+                    return 0;
                 }
             
             }
@@ -50,6 +50,8 @@ LEMOON_PRIVATE int lio_niodispatch(lua_State *L, lio*base, int timeout)
             }    
         }
     }
+
+	return 1;
 }
 
 static int __epoll_close(lua_State *L)
@@ -81,7 +83,7 @@ LEMOON_API void lemoon_newio(lua_State *L)
 
 LEMOON_PRIVATE int lfile_register(lua_State *L,lio * io, int fd)
 {
-    struct epoll_event event = {EPOLLIN | EPOLLOUT | EPOLLRDHUP | EPOLLPRI | EPOLLERR | EPOLLHUP | EPOLLET};
+    struct epoll_event event = {EPOLLIN | EPOLLOUT | EPOLLPRI | EPOLLERR | EPOLLHUP | EPOLLET};
     
     event.data.fd = fd;
     

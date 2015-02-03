@@ -5,7 +5,7 @@
  * \author yayan
  * Contact: user@company.com
  *
- * \brief 
+ * \brief
  *
  * TODO: long description
  *
@@ -21,17 +21,19 @@ namespace lemoon{ namespace luabind{
     class stack_protector
     {
     public:
-        stack_protector(lua_State *L) :_L(L),_top(lua_gettop(L))
+        stack_protector(lua_State* L)
+            : _vm(L)
+            , _top(lua_gettop(L))
         {
 
         }
 
         ~stack_protector()
         {
-            lua_settop(_L, _top);
+            lua_settop(_vm, _top);
         }
     private:
-        lua_State                   *_L;
+        lua_State                   *_vm;
         int                         _top;
     };
 

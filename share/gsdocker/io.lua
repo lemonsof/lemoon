@@ -32,7 +32,7 @@ io.readfull = function(sock, reader, len, callback)
             return
         end
 
-        reader:append(bytes)
+        reader:WriteBytes(bytes)
 
         len = len - #bytes
 
@@ -46,7 +46,7 @@ io.readfull = function(sock, reader, len, callback)
 end
 
 io.readmessage = function(sock, callback)
-    local reader = lemoon.reader()
+    local reader = lemoon.buff()
     io.readfull(sock,reader,2,function(err)
 
         if err ~= nil then
@@ -66,14 +66,14 @@ end
 
 
 io.doexchangekey = function(conn,callback)
-    local stream = lemoon.writer()
+    local stream = lemoon.buff()
 
     local E = conn.dhkey:E()
 
     stream:WriteUint16(#E + 3)
     stream:WriteByte(Code.DHExchange)
     stream:WriteUint16(#E);
-    stream:write(E)
+    stream:WriteBytes(E)
     conn.sock:send(stream,function(err)
         if err ~= nil then
             callback(err)
@@ -96,9 +96,9 @@ io.doexchangekey = function(conn,callback)
 
             reader:ReadUint16()
 
-            conn.dhkey:Gen(reader:bytes())
+            conn.dhkey:apply(reader:ReadBytes(-1))
 
-            print(conn.dhkey:Key())
+            print(conn.dhkey)
 
             callback(nil)
 

@@ -1,5 +1,5 @@
 #include <lemoon/lsock.h>
-#include <lemoon/lstream.h>
+#include <lemoon/lbuff.h>
 LEMOON_PRIVATE int lsock_new(lua_State *L)
 {
     luaL_checkstack(L, 3, NULL);
@@ -82,10 +82,10 @@ LEMOON_PRIVATE int lsock_send(lua_State *L)
 	}
 	else
 	{
-		lstream *writer = (lstream*)luaL_checkudata(L, 2,LWRITER_NAME);
+		lbuff *writer = (lbuff*)luaL_checkudata(L, 2, LBUFF_NAME);
 
-		buff = writer->buff;
-		len = writer->offset;
+		buff = writer->block;
+		len = writer->write_offset - writer->read_offset;
 	}
 	
 

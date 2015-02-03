@@ -1,14 +1,12 @@
 #define LUA_LIB
 
-#include "lua.h"
-#include "lauxlib.h"
+#include "lua.hpp"
 #include "lnet.h"
-
 #include <string.h>
 
 #if defined(WIN32) || defined (WP8)
 #include <string>
-#	define WIN32_LEAN_AND_MEAN  
+#	define WIN32_LEAN_AND_MEAN
 #	include <Windows.h>
 #endif
 
@@ -225,7 +223,7 @@ static std::string utf8_encode(const std::wstring &wstr, size_t size_needed)
 	if (size_needed == 0)
 		size_needed = WideCharToMultiByte(CP_UTF8, 0, &wstr[0], (int)wstr.size(), NULL, 0, NULL, NULL);
 	std::string strTo(size_needed, 0);
-	WideCharToMultiByte(CP_UTF8, 0, &wstr[0], (int)wstr.size(), &strTo[0], size_needed, NULL, NULL);
+	WideCharToMultiByte(CP_UTF8, 0, &wstr[0], (int)wstr.size(), &strTo[0], (int)size_needed, NULL, NULL);
 	return strTo;
 }
 

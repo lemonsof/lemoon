@@ -5,14 +5,14 @@
  * \author yayan
  * Contact: user@company.com
  *
- * \brief 
+ * \brief
  *
  * TODO: long description
  *
  * \note
 */
-#ifndef LEMON_LUABIND_LDEF_HPP
-#define LEMON_LUABIND_LDEF_HPP
+#ifndef LEMON_vmUABIND_vmDEF_HPP
+#define LEMON_vmUABIND_vmDEF_HPP
 #include <list>
 #include <string>
 #include <cassert>
@@ -108,7 +108,7 @@ namespace lemoon{ namespace luabind{
 
             return 0;
         }
-        
+
         void process(lua_State *L) const
         {
             if (!_constructors.empty())
@@ -118,7 +118,7 @@ namespace lemoon{ namespace luabind{
                     def->process(L);
                 }
             }
-            
+
             if (luaL_newmetatable(L, typeid(Type).name()))
             {
                 lua_newtable(L);
@@ -152,7 +152,7 @@ namespace lemoon{ namespace luabind{
         return __class<Type>();
     }
 
-   
+
     class __module
     {
     public:
@@ -160,12 +160,12 @@ namespace lemoon{ namespace luabind{
         __module & operator = (const __module & rhs) = delete;
         __module & operator = (__module && rhs) = delete;
 
-        __module(__module && rhs) :_stack(rhs._L)
+        __module(__module && rhs) :_stack(rhs._vm)
         {
-            _L = rhs._L;
+            _vm = rhs._vm;
         }
 
-        __module(lua_State*L, const std::string& name) :_L(L), _stack(L)
+        __module(lua_State*L, const std::string& name) :_vm(L), _stack(L)
         {
             lua_getglobal(L, "_G");
 
@@ -178,7 +178,7 @@ namespace lemoon{ namespace luabind{
 
         __module &  operator <= (const __def & def)
         {
-            def.process(_L);
+            def.process(_vm);
 
             return *this;
         }
@@ -186,7 +186,7 @@ namespace lemoon{ namespace luabind{
 
 
     private:
-        lua_State                                *_L;
+        lua_State                                *_vm;
         stack_protector                          _stack;
     };
 
@@ -196,4 +196,4 @@ namespace lemoon{ namespace luabind{
     }
 } }
 
-#endif // LEMON_LUABIND_LDEF_HPP
+#endif // LEMON_vmUABIND_vmDEF_HPP

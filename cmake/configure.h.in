@@ -14,11 +14,11 @@
 #ifdef WIN32
 #	define ${LEMON_PACKAGE_PREFIX}_EXPORT 	__declspec(dllexport)
 #	define ${LEMON_PACKAGE_PREFIX}_IMPORT 	__declspec(dllimport)
-#	define ${LEMON_PACKAGE_PREFIX}_PRIVATE  
+#	define ${LEMON_PACKAGE_PREFIX}_PRIVATE
 #else
-#	define ${LEMON_PACKAGE_PREFIX}_EXPORT 	__attribute__ ((visibility ("default")))
-#	define ${LEMON_PACKAGE_PREFIX}_IMPORT		__attribute__ ((visibility ("default")))
-#	define ${LEMON_PACKAGE_PREFIX}_PRIVATE	__attribute__ ((visibility ("hidden")))
+#	define ${LEMON_PACKAGE_PREFIX}_EXPORT
+#	define ${LEMON_PACKAGE_PREFIX}_IMPORT
+#	define ${LEMON_PACKAGE_PREFIX}_PRIVATE
 #endif //WIN32
 
 #ifdef ${LEMON_PACKAGE_PREFIX}_BUILD_AS_DLL

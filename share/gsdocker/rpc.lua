@@ -11,21 +11,21 @@ local callmetatable = {}
 local idgen = 0
 
 function callmetatable.NewParam(call)
-    local param = lemoon.writer ()
+    local param = lemoon.buff ()
     call.params[#call.params + 1] = param
     return param
 end
 
 
 function callmetatable.Invoke(call)
-    local stream = lemoon.writer ()
+    local stream = lemoon.buff ()
     stream:WriteUint16 (idgen);
     stream:WriteUint16 (call.Service);
     stream:WriteUint16 (call.Method);
     stream:WriteUint16 (#call.params);
     for i,v in ipairs(call.params) do
         stream:WriteUint16(v:length())
-        stream:write(v)
+        stream:WriteBytes(v)
     end
 
     local msg =

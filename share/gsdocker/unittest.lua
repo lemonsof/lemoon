@@ -12,8 +12,7 @@ ygg.GW.LoginWithUDID("helloworld",function(err,status)
     if status ~= ygg.Err.Success then
         print("login err :" .. status)
     end
-
-
+    print("hello")
 end)
 
 while true do

@@ -1,4 +1,5 @@
 #include <lemoon/lio.h>
+#define D(L, ...) lemoon_log(L,LEMOON_LOG_DEBUG,"SOCKNIO",##__VA_ARGS__)
 #ifndef WIN32
 #include <fcntl.h>
 #include <unistd.h>

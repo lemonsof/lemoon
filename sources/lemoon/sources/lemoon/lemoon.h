@@ -56,6 +56,16 @@ extern "C" {
 #define LEMOON_RUNTIME_ERROR                        -2
 #define LEMOON_NOFUTURE                             -1
 
+#define LEMOON_LOG_UNKNOWN							0
+#define LEMOON_LOG_DEFAULT							1
+#define LEMOON_LOG_VERBOSE							2
+#define LEMOON_LOG_DEBUG							3
+#define LEMOON_LOG_INFO								4
+#define LEMOON_LOG_WARN								5
+#define LEMOON_LOG_ERROR							6
+#define LEMOON_LOG_FATAL							7
+#define LEMOON_LOG_SILENT							8
+
 //////////////////////////////////////////////////////////////////////////
 //lemoon core APIs
 
@@ -98,6 +108,9 @@ LEMOON_API void lemoon_pusherror(lua_State *L, const char * file, int lines, con
 LEMOON_API void lemoon_pushsysmerror(lua_State *L,int errcode, const char * file, int lines, const char* msg,...);
 LEMOON_API int lemoon_sysmerror(lua_State *L, int errcode, const char * file, int lines, const char* msg, ...);
 
+
+LEMOON_API void lemoon_log(lua_State *L, int loglevel, const char *tag, const char* msg, ...);
+
 //utils APIs
 LEMOON_API int lemoonL_dostring(lua_State *L,const char * fmt, ...);
 
@@ -105,7 +118,7 @@ LEMOON_API int lemoonL_dostring(lua_State *L,const char * fmt, ...);
 LEMOON_API void * lemoon_alloc (void *ud, void *ptr, size_t osize, size_t nsize);
 #endif
 
-LEMOON_API void * lemoon_newclass(lua_State *L, const char * name, size_t classize, const luaL_Reg * funcs,lua_CFunction closef);
+LEMOON_API void * lemoon_newclass(lua_State *L, const char * name, size_t classize, const luaL_Reg * funcs, const luaL_Reg * metafuncs);
 
 #define lemoonL_error(L,msg,...) lemoon_error((L),__FILE__,__LINE__,(msg),##__VA_ARGS__)
 #define lemoonL_pusherror(L,msg,...) lemoon_pusherror((L),__FILE__,__LINE__,(msg),##__VA_ARGS__)

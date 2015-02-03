@@ -2,12 +2,13 @@
 #cmakedefine LEMOON_KQUEUE_H
 #cmakedefine LEMOON_HAS_EPOLL_H
 #cmakedefine LEMOON_HAS_JEMALLOC_H
+#cmakedefine LEMOON_BIG_END
 
 #ifdef WIN32
-#	define WIN32_WINNT			${WIN32_WINNT} 			
-#	define _WIN32_WINDOWS		${_WIN32_WINDOWS} 			
-#	define NTDDI_VERSION		${NTDDI_VERSION} 			
-#	define _WIN32_IE			${_WIN32_IE} 			
+#	define WIN32_WINNT			${WIN32_WINNT}
+#	define _WIN32_WINDOWS		${_WIN32_WINDOWS}
+#	define NTDDI_VERSION		${NTDDI_VERSION}
+#	define _WIN32_IE			${_WIN32_IE}
 #endif //WIN32
 
 #ifdef WIN32
@@ -15,15 +16,15 @@
 #		define _CRTDBG_MAP_ALLOC
 #		include <crtdbg.h>
 #	endif
-#	define WIN32_LEAN_AND_MEAN  
+#	define WIN32_LEAN_AND_MEAN
 #	include <Windows.h>
 #	include <WinSock2.h>
 #	include <Ws2tcpip.h>
 #	include <tchar.h>
-#	pragma comment(lib,"Ws2_32.lib") 
+#	pragma comment(lib,"Ws2_32.lib")
 #else
 #	include <sys/types.h>
 #	include <sys/socket.h>
 #	include <netdb.h>
 #	include <sys/time.h>
-#endif //WIN32 
+#endif //WIN32
