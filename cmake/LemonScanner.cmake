@@ -22,11 +22,11 @@ function(lemon_scan_files RESULT NAME PATH)
 	foreach(FILE ${LEMON_SCAN_FILES_FOUND})
 		get_filename_component(FILE_NAME ${FILE} NAME)
 		string(REPLACE ${FILE_NAME} "" DIRECTORY ${FILE})
-		
+
 		file(RELATIVE_PATH DIRECTORY ${PATH} ${DIRECTORY})
 
 		file(TO_NATIVE_PATH "${DIRECTORY}" DIRECTORY)
-		
+
 		source_group("${NAME}\\${DIRECTORY}" FILES ${FILE})
 	endforeach()
 
@@ -81,7 +81,7 @@ function(lemon_do_package_config NAME PATH TYPE OUTPUT)
 	file(APPEND ${PROJECT_CONFIGURE_H} ${BUFFER})
 
 	if(EXISTS ${PROJECT_CONFIGURE_H_IN})
-    	file(STRINGS ${PROJECT_CONFIGURE_H_IN} BUFFER NEWLINE_CONSUME)    
+    	file(STRINGS ${PROJECT_CONFIGURE_H_IN} BUFFER NEWLINE_CONSUME)
     	file(APPEND ${PROJECT_CONFIGURE_H} ${BUFFER})
   	endif()
 
@@ -93,32 +93,32 @@ function(lemon_do_package_config NAME PATH TYPE OUTPUT)
 endfunction()
 ################################################################################################################
 function(lemon_set_project_output_dir TARGET)
- #redirect the output directory 
+ #redirect the output directory
    SET_TARGET_PROPERTIES(
-    ${TARGET} PROPERTIES 
-    
+    ${TARGET} PROPERTIES
+
     ARCHIVE_OUTPUT_DIRECTORY_DEBUG ${PROJECT_BINARY_DIR}/build/lib/
-    
+
     LIBRARY_OUTPUT_DIRECTORY_DEBUG ${PROJECT_BINARY_DIR}/build/lib/
-    
+
     RUNTIME_OUTPUT_DIRECTORY_DEBUG ${PROJECT_BINARY_DIR}/build/bin/
     )
   SET_TARGET_PROPERTIES(
-    ${TARGET} PROPERTIES 
-    
+    ${TARGET} PROPERTIES
+
     ARCHIVE_OUTPUT_DIRECTORY_RELEASE ${PROJECT_BINARY_DIR}/build/lib/
-    
+
     LIBRARY_OUTPUT_DIRECTORY_RELEASE ${PROJECT_BINARY_DIR}/build/lib/
-    
+
     RUNTIME_OUTPUT_DIRECTORY_RELEASE ${PROJECT_BINARY_DIR}/build/bin/
     )
   SET_TARGET_PROPERTIES(
-    ${TARGET} PROPERTIES 
-    
+    ${TARGET} PROPERTIES
+
     ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/build/lib/
-    
+
     LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/build/lib/
-    
+
     RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/build/bin/
     )
 
@@ -129,7 +129,7 @@ function(lemon_package_c_cxx_flags NAME)
 	LEMON_PACKAGE_PREFIX(${NAME} LEMON_PACKAGE_PREFIX)
 
 	if(WIN32)
-		
+
 		add_definitions(/WX /W4  /D_UNICODE /DUNICODE)
 
     	target_compile_definitions(${NAME} PRIVATE ${LEMON_PACKAGE_PREFIX}_BUILD)
@@ -151,7 +151,7 @@ function(lemon_package_info DIRECTORY TYPE VERSION NAME OUTPUT)
   if(EXISTS ${ASSEMBLYINFO_FILE})
 
   	set(GEN_FILES ${OUTPUT}/assembly.h ${OUTPUT}/assembly.cpp)
-	
+
 	if(NOT ${TYPE} STREQUAL "STATIC" AND WIN32)
 		list(APPEND GEN_FILES ${OUTPUT}/assembly.rc)
 	endif()
@@ -160,11 +160,11 @@ function(lemon_package_info DIRECTORY TYPE VERSION NAME OUTPUT)
 
     add_custom_command(
       OUTPUT ${GEN_FILES}
-      #       lua.exe      compiler    metadata file        version     c/c++ output directory   
+      #       lua.exe      compiler    metadata file        version     c/c++ output directory
       COMMAND ${LEMON_LUA} ${COMPILER} ${ASSEMBLYINFO_FILE} ${VERSION}  ${OUTPUT} ${NAME}
       DEPENDS ${COMPILER} ${SRC} ${ASSEMBLYINFO_FILE}
       COMMENT "run assembly info compiler ...")
-    
+
     LEMON_PACKAGE_PREFIX(${NAME} LEMON_PACKAGE_PREFIX)
 	string(REGEX REPLACE "[.-]" "\\\\" LEMON_PACKAGE_RELATIVE_PATH ${NAME})
 
@@ -174,17 +174,17 @@ function(lemon_package_info DIRECTORY TYPE VERSION NAME OUTPUT)
 endfunction()
 ################################################################################################################
 function(lemon_txx_compile DIR )
-	
+
 	lemon_scan_files(FILES "Source Files" ${DIR}/sources PATTERNS *.ctg)
-	
+
 	set(COMPILER ${LEMON_CMAKE_ROOT}/extension/txx.lua)
 
 	foreach(FILE ${FILES})
 
 		file(RELATIVE_PATH PATH ${DIR}/sources ${FILE})
-	
+
 		string(REPLACE ".ctg" "" PATH ${PATH})
-		
+
 		get_filename_component(NAME ${PATH} NAME)
 
 		string(REPLACE "${NAME}" "" CURRENT_DIR ${PATH})
@@ -216,11 +216,11 @@ function(lemon_txx_compile DIR )
 endfunction()
 
 function(lemon_asm_files DIR)
-	
+
 	lemon_scan_files(LEMON_PACKAGE_ASM_SOURCE_FILES "Source Files" ${DIR}/sources/${LEMON_PACKAGE_RELATIVE_PATH}/asm/${LEMON_ASM_ARCH}-${LEMON_ASM_PLATFORM} PATTERNS *.${LEMON_ASM_SUFFIX})
 
 	set(LEMON_PACKAGE_ASM_SOURCE_FILES ${LEMON_PACKAGE_ASM_SOURCE_FILES} PARENT_SCOPE)
-	
+
 endfunction()
 
 function(lemon_libdev_package_install DIR GEN_DIR)
@@ -269,7 +269,7 @@ function(lemon_load_package PATH)
 	#lemon_package_info(${LEMON_PACKAGE_DIRECTORY} ${LEMON_PACKAGE_TYPE} ${LEMON_SOLUTION_VERSION} ${LEMON_PACKAGE_NAME} ${LEMON_PACKAGE_GEN_DIRECTORY})
 	#lemon_txx_compile(${LEMON_PACKAGE_DIRECTORY})
 	#lemon_asm_files(${LEMON_PACKAGE_DIRECTORY})
-	
+
 	include_directories(${LEMON_PACKAGE_DIRECTORY}/sources ${LEMON_PACKAGE_GEN_DIRECTORY} ${LEMON_PACKAGE_CONFIG_INCLUDE_DIRS})
 
 	if(${LEMON_PACKAGE_TYPE} STREQUAL "SHARED")
@@ -277,7 +277,13 @@ function(lemon_load_package PATH)
 	elseif(${LEMON_PACKAGE_TYPE} STREQUAL "STATIC")
 		add_library(${LEMON_PACKAGE_NAME} STATIC ${LEMON_PACKAGE_C_CXX_FILES} ${LEMON_PACKAGE_CONFIG_FILES} ${LEMON_PACKAGE_INFO_FILES} ${LEMON_PACKAGE_TXX_FILES} ${LEMON_PACKAGE_ASM_SOURCE_FILES})
 	else()
-		add_executable(${LEMON_PACKAGE_NAME} ${LEMON_PACKAGE_C_CXX_FILES} ${LEMON_PACKAGE_CONFIG_FILES} ${LEMON_PACKAGE_INFO_FILES} ${LEMON_PACKAGE_TXX_FILES} ${LEMON_PACKAGE_ASM_SOURCE_FILES})
+		if(NOT IOS_PLATFORM AND NOT ANDROID)
+			if(${LEMON_PACKAGE_TYPE} STREQUAL "MACOSX_BUNDLE")
+				add_executable(${LEMON_PACKAGE_NAME} MACOSX_BUNDLE ${LEMON_PACKAGE_C_CXX_FILES} ${LEMON_PACKAGE_CONFIG_FILES} ${LEMON_PACKAGE_INFO_FILES} ${LEMON_PACKAGE_TXX_FILES} ${LEMON_PACKAGE_ASM_SOURCE_FILES})
+			else()
+				add_executable(${LEMON_PACKAGE_NAME} ${LEMON_PACKAGE_C_CXX_FILES} ${LEMON_PACKAGE_CONFIG_FILES} ${LEMON_PACKAGE_INFO_FILES} ${LEMON_PACKAGE_TXX_FILES} ${LEMON_PACKAGE_ASM_SOURCE_FILES})
+			endif()
+		endif()
 	endif()
 
 	if(LEMON_PACKAGE_LINK_LIBRARIES OR LEMON_PACKAGE_CONFIG_LINK_LIBRARIES)
@@ -297,27 +303,27 @@ function(lemon_load_package PATH)
 	set_property(TARGET ${LEMON_PACKAGE_NAME} PROPERTY FOLDER /sources/${LEMON_PACKAGE_NAME})
 	lemon_set_project_output_dir(${LEMON_PACKAGE_NAME})
 
-	if(LEMON_PACKAGE_UNITTEST_C_CXX_FILES)
-
-		include_directories(${LEMON_PACKAGE_UNITTEST_GEN_DIRECTORY})
-		set(LEMON_PACKAGE_UNITTEST_MAIN_CPP ${LEMON_PACKAGE_UNITTEST_GEN_DIRECTORY}/main.cpp)
-		configure_file(${LEMON_CMAKE_ROOT}/unittest-main.cpp.in ${LEMON_PACKAGE_UNITTEST_MAIN_CPP})
-		add_executable(unittest.${LEMON_PACKAGE_NAME} ${LEMON_PACKAGE_UNITTEST_C_CXX_FILES} ${LEMON_PACKAGE_UNITTEST_MAIN_CPP})
-		target_link_libraries(unittest.${LEMON_PACKAGE_NAME} ${LEMON_PACKAGE_NAME})
-		add_test(NAME unittest.${LEMON_PACKAGE_NAME} COMMAND ${PROJECT_BINARY_DIR}/build/bin/unittest-${LEMON_PACKAGE_NAME} ${PROJECT_BINARY_DIR}/build/)
-		set_property(TARGET unittest.${LEMON_PACKAGE_NAME} PROPERTY FOLDER /sources/${LEMON_PACKAGE_NAME})
-		lemon_set_project_output_dir(unittest.${LEMON_PACKAGE_NAME})
-		lemon_package_c_cxx_flags(unittest.${LEMON_PACKAGE_NAME})
+	if(NOT IOS_PLATFORM AND NOT ANDROID AND NOT ${LEMON_PACKAGE_TYPE} STREQUAL "MACOSX_BUNDLE")
+		if(LEMON_PACKAGE_UNITTEST_C_CXX_FILES)
+			include_directories(${LEMON_PACKAGE_UNITTEST_GEN_DIRECTORY})
+			set(LEMON_PACKAGE_UNITTEST_MAIN_CPP ${LEMON_PACKAGE_UNITTEST_GEN_DIRECTORY}/main.cpp)
+			configure_file(${LEMON_CMAKE_ROOT}/unittest-main.cpp.in ${LEMON_PACKAGE_UNITTEST_MAIN_CPP})
+			add_executable(unittest.${LEMON_PACKAGE_NAME} ${LEMON_PACKAGE_UNITTEST_C_CXX_FILES} ${LEMON_PACKAGE_UNITTEST_MAIN_CPP})
+			target_link_libraries(unittest.${LEMON_PACKAGE_NAME} ${LEMON_PACKAGE_NAME})
+			add_test(NAME unittest.${LEMON_PACKAGE_NAME} COMMAND ${PROJECT_BINARY_DIR}/build/bin/unittest-${LEMON_PACKAGE_NAME} ${PROJECT_BINARY_DIR}/build/)
+			set_property(TARGET unittest.${LEMON_PACKAGE_NAME} PROPERTY FOLDER /sources/${LEMON_PACKAGE_NAME})
+			lemon_set_project_output_dir(unittest.${LEMON_PACKAGE_NAME})
+			lemon_package_c_cxx_flags(unittest.${LEMON_PACKAGE_NAME})
+		endif()
+		if(LEMON_PACKAGE_EXE_C_CXX_FILES)
+			add_executable(${LEMON_PACKAGE_EXE_NAME} ${LEMON_PACKAGE_EXE_C_CXX_FILES})
+			lemon_set_project_output_dir(${LEMON_PACKAGE_EXE_NAME})
+			lemon_package_c_cxx_flags(${LEMON_PACKAGE_EXE_NAME})
+			set_property(TARGET ${LEMON_PACKAGE_EXE_NAME} PROPERTY FOLDER /sources/${LEMON_PACKAGE_NAME})
+			target_link_libraries(${LEMON_PACKAGE_EXE_NAME} ${LEMON_PACKAGE_NAME})
+		endif()
 	endif()
 
-
-	if(LEMON_PACKAGE_EXE_C_CXX_FILES)
-		add_executable(${LEMON_PACKAGE_EXE_NAME} ${LEMON_PACKAGE_EXE_C_CXX_FILES})
-		lemon_set_project_output_dir(${LEMON_PACKAGE_EXE_NAME})
-		lemon_package_c_cxx_flags(${LEMON_PACKAGE_EXE_NAME})
-		set_property(TARGET ${LEMON_PACKAGE_EXE_NAME} PROPERTY FOLDER /sources/${LEMON_PACKAGE_NAME})
-		target_link_libraries(${LEMON_PACKAGE_EXE_NAME} ${LEMON_PACKAGE_NAME})
-	endif()
 
 	message(STATUS "======================================================================")
 	message(STATUS "= Package: ${LEMON_PACKAGE_NAME}")
@@ -334,7 +340,7 @@ function(lemon_load_package PATH)
 		message(STATUS "= config.cmake: FOUND")
 	else()
 		message(STATUS "= config.cmake: NOT FOUND")
-		
+
 	endif()
 
 	message(STATUS "======================================================================")
@@ -344,7 +350,7 @@ endfunction()
 ################################################################################################################
 
 function(lemon_preload_package PATH)
-	
+
 	include(${PATH})
 
 	string(REPLACE "package.cmake" "" LEMON_PACKAGE_DIRECTORY ${PATH})
@@ -363,14 +369,14 @@ function(lemon_scan_packages)
 	#do search
 	file(GLOB_RECURSE PACKAGES ${LEMON_SCAN_ROOT}/package.cmake)
 
-	foreach(PACKAGE ${PACKAGES})	
+	foreach(PACKAGE ${PACKAGES})
 		lemon_preload_package(${PACKAGE})
 	endforeach()
 
 	include_directories(${LEMON_INCLUDE_DIRECTORIES} ${LEMON_GEN_ROOT})
 	link_directories(${LEMON_LIBRARY_DIRECTORIES})
 
-	foreach(PACKAGE ${PACKAGES})	
+	foreach(PACKAGE ${PACKAGES})
 		lemon_load_package(${PACKAGE})
 	endforeach()
 endfunction()

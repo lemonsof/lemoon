@@ -49,14 +49,15 @@ elseif(UNIX)
   #
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99")
+
+  if(APPLE AND NOT IOS_PLATFORM)
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -arch i386 -arch x86_64")
+      set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -arch i386 -arch x86_64")
+  else()
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+      set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99")
+  endif()
+
 endif()
-
-
-lemon_option(
-  LEMON_MPL_MAX_ARGS
-  DEFAULT 8
-  VALUES 8 16 32 64
-  DESCRIPTION "the mpl library max template args"
-  )
 
 link_directories(${PROJECT_BINARY_DIR}/build/lib)

@@ -14,13 +14,13 @@ LEMOON_PRIVATE int lio_niodispatch(lua_State *L, lio*base, int timeout)
 {
     //lkqueue *io = luaL_checkudata(L, index, LEMOON_REG(LEMOON_IO));
     lkqueue *io = (lkqueue*)base;
-    
+
     struct kevent events[1];
-    
+
     struct timespec spec = { timeout / 1000, timeout % 1000 * 1000000 };
-    
+
     int ret = kevent(io->handle, NULL, 0, events, 1, &spec);
-    
+
     if(ret > 0)
     {
         int fd = events[0].ident;
@@ -29,23 +29,27 @@ LEMOON_PRIVATE int lio_niodispatch(lua_State *L, lio*base, int timeout)
         lfile * file = lfile_search((lio*)io, fd);
         if(!file)
         {
-            return LEMOON_SUCCESS;
+            return 1;
         }
-        
+
         if(filter & EVFILT_READ)
         {
             lfile_process_rwQ(L,(lio*)io, file->readQ,errcode);
         }
-        
+
         if(filter & EVFILT_WRITE)
         {
             lfile_process_rwQ(L,(lio*)io, file->writeQ,errcode);
         }
+
+        return 1;
     }
     else if(ret == -1)
     {
         return lemoonL_sysmerror(L, errno, "process kevent exception");
     }
+
+    return 0;
 }
 
 static int __kq_close(lua_State *L)
@@ -87,10 +91,8 @@ LEMOON_PRIVATE int lfile_register(lua_State *L,lio * io, int fd)
         lemoonL_pushsysmerror(L, errno, "process kevent exception");
         return LEMOON_RUNTIME_ERROR;
     }
-    
+
     return LEMOON_SUCCESS;
 }
 
 #endif //KQUEUE
-
-

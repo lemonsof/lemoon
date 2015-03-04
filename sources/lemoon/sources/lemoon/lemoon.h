@@ -37,7 +37,11 @@ extern "C" {
 }
 #endif //__cplusplus
 
+#ifdef BUNDLE
+#include <lemoon/bundleconf.h>
+#else
 #include <lemoon/configure.h>
+#endif
 
 
 //////////////////////////////////////////////////////////////////////////
