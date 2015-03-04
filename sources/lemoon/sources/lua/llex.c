@@ -222,7 +222,7 @@ static void buffreplace (LexState *ls, char from, char to) {
 
 
 #if !defined(l_getlocaledecpoint)
-#define l_getlocaledecpoint()	(localeconv()->decimal_point[0])
+#define l_getlocaledecpoint()	'.'//(localeconv()->decimal_point[0])
 #endif
 
 
@@ -599,4 +599,3 @@ int luaX_lookahead (LexState *ls) {
   ls->lookahead.token = llex(ls, &ls->lookahead.seminfo);
   return ls->lookahead.token;
 }
-

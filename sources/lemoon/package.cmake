@@ -11,5 +11,5 @@ set(LEMON_PACKAGE_EXE_NAME lnode)
 
 
 if(ANDROID)
-    set(LEMON_PACKAGE_LINK_LIBRARIES log)
+    set(LEMON_PACKAGE_LINK_LIBRARIES log m)
 endif()

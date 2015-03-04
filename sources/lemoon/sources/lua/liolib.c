@@ -412,7 +412,7 @@ static int readdigits (RN *rn, int hex) {
 
 /* access to locale "radix character" (decimal point) */
 #if !defined(l_getlocaledecpoint)
-#define l_getlocaledecpoint()     (localeconv()->decimal_point[0])
+#define l_getlocaledecpoint()     '.'//(localeconv()->decimal_point[0])
 #endif
 
 
@@ -754,4 +754,3 @@ LUAMOD_API int luaopen_io (lua_State *L) {
   createstdfile(L, stderr, NULL, "stderr");
   return 1;
 }
-
